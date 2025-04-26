@@ -1,4 +1,4 @@
-package com.axreng.backend.validators;
+package com.axreng.backend.util;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
