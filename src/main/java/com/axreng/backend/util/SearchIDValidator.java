@@ -2,7 +2,7 @@ package com.axreng.backend.util;
 
 public class SearchIDValidator {
     
-    private static final String INPUT_PATTERN = "\\d+";
+    private static final String INPUT_PATTERN = "^[a-zA-Z0-9]{8}$";
     private static final int MIN_LENGTH = 8;
     private static final int MAX_LENGTH = 8;
     

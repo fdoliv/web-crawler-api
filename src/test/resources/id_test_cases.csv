@@ -1,2 +1,15 @@
-id, expected
-
+id,expected
+30vbllyb,true
+abcd1234,true
+A1B2C3D4,true
+12345678,true
+abcdefgh,true
+ABCDEFGH,true
+1234abcd,true
+abcd123!,false
+1234567,false
+123456789,false
+abcd_123,false
+,null,false
+',' ,false
+abcdefghijklmin, false
