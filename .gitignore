@@ -25,3 +25,5 @@ replay_pid*
 
 Dockerfile
 pom.xml
+
+target/test-classes/*.csv
