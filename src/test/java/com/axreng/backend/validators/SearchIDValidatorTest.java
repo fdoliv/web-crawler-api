@@ -7,6 +7,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 
+import com.axreng.backend.util.SearchIDValidator;
+
 /**
  * Test class for validating the functionality of the SearchIDValidator.
  * 
