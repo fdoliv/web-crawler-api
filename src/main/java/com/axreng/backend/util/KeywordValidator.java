@@ -1,4 +1,4 @@
-package com.axreng.backend.validators;
+package com.axreng.backend.util;
 
 public class KeywordValidator {
     
