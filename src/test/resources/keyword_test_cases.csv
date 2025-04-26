@@ -1,0 +1,24 @@
+keyword,expected
+validInput,true
+four,true
+thirtyTwoCharactersLongInput123,true
+abc,false
+a,false
+"         ",false
+,false
+Java,true
+user name,true
+1234,true
+a,false
+ThisIsALongStringWithMoreThan32CharactersSoItShouldBeInvalid,false
+"",false
+<script>alert('test')</script>,true
+<!-- HTML comment -->,true
+@#$%¨!,true
+CASE INSENSITIVE,true
+case insensitive,true
+"a.repeat(33)",true
+abc,false
+ABCDEFGHIJKLMNOPQRSTUVWXYZ123456,true
+   spaces   ,true
+MySQL 8.0.1, true
