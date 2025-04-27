@@ -19,7 +19,7 @@ class CrawlControllerTest {
     @BeforeAll
     static void setUp() {
         
-        CrawlController.initializeRoutes();
+        CrawlController.getInstance().initializeRoutes();
         spark.Spark.awaitInitialization(); 
     }
 
