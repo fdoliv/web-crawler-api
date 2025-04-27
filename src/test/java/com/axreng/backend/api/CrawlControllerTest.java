@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import com.axreng.backend.helper.HttpClientHelper;
 import com.axreng.backend.helper.JsonHelper;
+import com.axreng.backend.util.HttpMethods;
 import com.axreng.backend.util.HttpResponseCode;
 
 import java.net.HttpURLConnection;
@@ -17,6 +18,7 @@ import static org.hamcrest.Matchers.*;
 class CrawlControllerTest {
 
     HttpClientHelper helper = HttpClientHelper.getInstance();
+    private final String BASE_URL = "http://localhost:4567";
 
     @BeforeAll
     static void setUp() {
@@ -30,51 +32,95 @@ class CrawlControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 200 OK for valid keyword")
+    @DisplayName("Should return 200 OK and id for valid keyword")
     void shouldReturn200ForValidKeyword() throws Exception {
         // Given
-        String requestBody = "{ \"keyword\": \"validKeyword\" }";
-        HttpURLConnection connection = helper.createConnection("http://localhost:4567/crawl", "POST", requestBody);
+        var BASE_PATH = "/crawl";
+        var expectedHttpResponseCode = HttpResponseCode.OK;
+        var expectedContentType = "application/json";
+        var expectedResponseBody = "{\"id\":";
+        var requestBody = "{ \"keyword\": \"validKeyword\" }";
 
-        // When
-        int responseCode = connection.getResponseCode();
-        String responseBody = helper.readResponse(connection);
+        HttpURLConnection connection = null;
+        try {
+            connection = helper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody);
+            // When
+            int responseCode = connection.getResponseCode();
+            String responseBody = helper.readResponse(connection);
+            String contentType = connection.getHeaderField("Content-Type");
 
-        // Then
-        assertThat(responseCode, is(200));
-        assertThat(responseBody, containsString("{\"id\":"));
+            // Then
+            assertThat("Response code should indicate OK code", responseCode, is(expectedHttpResponseCode));
+            assertThat("Response body shoud indicate the id", responseBody, containsString(expectedResponseBody));
+            assertThat("Content-type shoud be application/json", contentType, is(expectedContentType));
+            
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     @Test
     @DisplayName("Should return 400 Bad Request for invalid keyword")
     void shouldReturn400ForInvalidKeyword() throws Exception {
         // Given
-        String requestBody = "{ \"keyword\": \"abc\" }"; // Menos de 4 caracteres
-        HttpURLConnection connection = helper.createConnection("http://localhost:4567/crawl", "POST", requestBody);
+        var BASE_PATH = "/crawl";
+        var expectedHttpResponseCode = HttpResponseCode.BAD_REQUEST;
+        var expectedContentType = "application/json";
+        var expectedResponseBody = "too short";
+        String requestBody = "{ \"keyword\": \"abc\" }"; 
+        HttpURLConnection connection = null;
 
-        // When
-        int responseCode = connection.getResponseCode();
-        String responseBody = helper.readResponse(connection);
+        try{
+            connection = helper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody);
 
-        // Then
-        assertThat(responseCode, is(400));
-        assertThat(responseBody, containsString("too short"));
+            // When
+            int responseCode = connection.getResponseCode();
+            String responseBody = helper.readResponse(connection);
+            String contentType = connection.getHeaderField("Content-Type");
+
+    
+            // Then
+            assertThat("Response code should indicate BAD_REQUEST code", responseCode, is(expectedHttpResponseCode));
+            assertThat("Response message should indicate that keyword is too short", responseBody, containsString(expectedResponseBody));
+            assertThat("Content-type shoud be application/json", contentType, is(expectedContentType));
+
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     @Test
     @DisplayName("Should return 400 Bad Request for missing keyword")
     void shouldReturn400ForMissingKeyword() throws Exception {
         // Given
+        var BASE_PATH = "/crawl";
+        var expectedHttpResponseCode = HttpResponseCode.BAD_REQUEST;
+        var expectedContentType = "application/json";
+        var expectedResponseBody = "Invalid keyword";
         String requestBody = "{ }";
-        HttpURLConnection connection = helper.createConnection("http://localhost:4567/crawl", "POST", requestBody);
+        HttpURLConnection connection = null;
+        try{
+            connection = helper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody);
 
-        // When
-        int responseCode = connection.getResponseCode();
-        String responseBody = helper.readResponse(connection);
+            // When
+            int responseCode = connection.getResponseCode();
+            String responseBody = helper.readResponse(connection);
+            String contentType = connection.getHeaderField("Content-Type");
 
-        // Then
-        assertThat(responseCode, is(400));
-        assertThat(responseBody, containsString("Invalid keyword"));
+            // Then
+            assertThat("Response code should indicate BAD_REQUEST code", responseCode, is(expectedHttpResponseCode));
+            assertThat("Response message should indicate that keyword is invalid", responseBody, containsString(expectedResponseBody));
+            assertThat("Content-type shoud be application/json", contentType, is(expectedContentType));
+            
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     @Test
