@@ -7,7 +7,9 @@ public class SearchIDValidator {
     private static final int MAX_LENGTH = 8;
     
     public static boolean validate(String input) {
-        return input != null && input.matches(INPUT_PATTERN) 
+        return input != null 
+        && !input.isBlank()
+        && input.matches(INPUT_PATTERN) 
         && input.length() >= MIN_LENGTH 
         && input.length() <= MAX_LENGTH;
     }

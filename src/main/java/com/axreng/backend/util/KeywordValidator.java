@@ -7,7 +7,7 @@ public class KeywordValidator {
 
     public static boolean validate(String input) {
         return input != null 
-            && !input.trim().isEmpty()
+            && !input.isBlank()
             && input.length() >= MIN_LENGTH
             && input.length() <= MAX_LENGTH;
     }
