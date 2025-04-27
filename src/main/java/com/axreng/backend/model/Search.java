@@ -1,5 +1,6 @@
 package com.axreng.backend.model;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -14,6 +15,7 @@ public class Search {
         this.id = id;
         this.keyword = keyword;
         this.status = status;
+        this.urls = new HashSet<>();
     }
 
     public Search(String id) {
