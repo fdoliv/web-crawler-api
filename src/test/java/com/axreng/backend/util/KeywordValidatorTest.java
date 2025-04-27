@@ -2,10 +2,13 @@ package com.axreng.backend.util;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
+
+import com.axreng.backend.exception.KeywordValidatorException;
 
 /**
  * Test class for validating the functionality of the KeywordValidator.
@@ -28,10 +31,27 @@ public class KeywordValidatorTest {
     @CsvFileSource(resources = "/keyword_test_cases.csv", numLinesToSkip = 1)
     @DisplayName("Should validate keywords correctly from CSV file")
     void shouldValidateKeywordsFromCsv(String keyword, boolean expected) {
-        // When
-        boolean isValid = KeywordValidator.validate(keyword);
-
-        // Then
-        assertThat("Validation failed for keyword: " + keyword, isValid, is(expected));
+        if (expected) {
+            // When: Must not throw an exception
+            var isValid = true;
+            try{
+                KeywordValidator.validate(keyword);
+                
+            } catch (KeywordValidatorException e) {
+                isValid = false;
+            }
+            // Then: 
+            assertThat("Keyword should be valid: " + keyword, isValid, is(true));
+            
+        } else {
+            // When: Must throw an exception
+            KeywordValidatorException exception = assertThrows(
+                KeywordValidatorException.class, 
+                () -> KeywordValidator.validate(keyword)
+            );
+            // Then: Message should indicate invalid keyword
+            assertThat("Exception message should indicate invalid keyword", 
+                exception.getMessage(), containsString("Invalid keyword"));
+        }
     }
 }
