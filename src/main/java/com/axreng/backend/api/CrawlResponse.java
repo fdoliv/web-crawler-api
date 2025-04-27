@@ -1,5 +1,7 @@
 package com.axreng.backend.api;
 
+import com.google.gson.Gson;
+
 public class CrawlResponse {
     private String id;
 
@@ -16,5 +18,9 @@ public class CrawlResponse {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String toJson() {
+        return new Gson().toJson(this);
     }
 }

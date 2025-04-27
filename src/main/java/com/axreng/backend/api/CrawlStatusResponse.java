@@ -2,6 +2,8 @@ package com.axreng.backend.api;
 
 import java.util.List;
 
+import com.google.gson.Gson;
+
 public class CrawlStatusResponse {
     private String id;
     private String status;
@@ -16,27 +18,20 @@ public class CrawlStatusResponse {
         this.urls = urls;
     }
 
-    public String getId() {
-        return id;
-    }
-
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getStatus() {
-        return status;
     }
 
     public void setStatus(String status) {
         this.status = status;
     }
 
-    public List<String> getUrls() {
-        return urls;
-    }
 
     public void setUrls(List<String> urls) {
         this.urls = urls;
+    }
+
+    public String toJson() {
+        return new Gson().toJson(this);
     }
 }
