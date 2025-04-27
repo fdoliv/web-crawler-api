@@ -24,9 +24,19 @@ public class CrawlController {
             res.type("application/json");
 
             return gson.toJson(new CrawlErrorResponse(
-                400, 
+                HttpServletResponse.SC_BAD_REQUEST, 
                 "Bad Request", 
                 kve.getMessage(), 
+                req.pathInfo()
+            ));
+        } catch(Exception e){
+            res.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            res.type("application/json");
+
+            return gson.toJson(new CrawlErrorResponse(
+                HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                "Internal Server Error", 
+                "", 
                 req.pathInfo()
             ));
         }
