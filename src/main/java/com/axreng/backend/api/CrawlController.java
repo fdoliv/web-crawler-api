@@ -9,6 +9,7 @@ import com.axreng.backend.exception.KeywordValidatorException;
 import com.axreng.backend.exception.SearchIDValidatorException;
 import com.axreng.backend.model.Search;
 import com.axreng.backend.service.SearchService;
+import com.axreng.backend.util.HttpResponseCode;
 import com.axreng.backend.util.KeywordValidator;
 import com.axreng.backend.util.SearchIDValidator;
 import com.google.gson.Gson;
@@ -54,12 +55,12 @@ public class CrawlController {
                     crawlStatusResponse.setId(optionalSearch.get().getId());
                     crawlStatusResponse.setStatus(optionalSearch.get().getStatus().getValue());
                     crawlStatusResponse.setUrls(new ArrayList<>(optionalSearch.get().getUrls()));    
-                    res.status(HttpServletResponse.SC_OK);
+                    res.status(HttpResponseCode.OK);
                     return GSON.toJson(crawlStatusResponse, CrawlStatusResponse.class);
                 }
-                res.status(HttpServletResponse.SC_NOT_FOUND);
+                res.status(HttpResponseCode.NOT_FOUND);
                 return GSON.toJson(new CrawlErrorResponse(
-                        HttpServletResponse.SC_NOT_FOUND, 
+                        HttpResponseCode.NOT_FOUND, 
                         "Not Found", 
                         "Search with ID " + id + " not found", 
                         req.pathInfo()
@@ -67,10 +68,10 @@ public class CrawlController {
                 
                 
             } catch (SearchIDValidatorException sive){
-                res.status(HttpServletResponse.SC_BAD_REQUEST);
+                res.status(HttpResponseCode.BAD_REQUEST);
 
                 return GSON.toJson(new CrawlErrorResponse(
-                    HttpServletResponse.SC_BAD_REQUEST, 
+                    HttpResponseCode.BAD_REQUEST, 
                     "Bad Request", 
                     sive.getMessage(), 
                     req.pathInfo()
@@ -79,10 +80,10 @@ public class CrawlController {
             
             catch (Exception e) {
                 LOGGER.error("An unexpected error occurred", e);
-                res.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                res.status(HttpResponseCode.INTERNAL_SERVER_ERROR);
 
                 return GSON.toJson(new CrawlErrorResponse(
-                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    HttpResponseCode.INTERNAL_SERVER_ERROR, 
                     "Internal Server Error", 
                     "", 
                     req.pathInfo()
@@ -101,7 +102,7 @@ public class CrawlController {
                 Optional<Search> optionalSearch = searchService.findSearchByKeyword(crawlRequest.getKeyword());
                 
                 if (optionalSearch.isPresent()) {
-                    res.status(HttpServletResponse.SC_OK);
+                    res.status(HttpResponseCode.OK);
                     return GSON.toJson(new CrawlResponse(optionalSearch.get().getId()));
                 }
 
@@ -111,15 +112,15 @@ public class CrawlController {
                 CrawlResponse crawlResponse = new CrawlResponse();
                 crawlResponse.setId(search.getId());
 
-                res.status(HttpServletResponse.SC_OK);
+                res.status(HttpResponseCode.OK);
                 
                 return crawlResponse.toJson();
             } catch (KeywordValidatorException kve) {
 
-                res.status(HttpServletResponse.SC_BAD_REQUEST);
+                res.status(HttpResponseCode.BAD_REQUEST);
 
                 return GSON.toJson(new CrawlErrorResponse(
-                    HttpServletResponse.SC_BAD_REQUEST, 
+                    HttpResponseCode.BAD_REQUEST, 
                     "Bad Request", 
                     kve.getMessage(), 
                     req.pathInfo()
@@ -127,18 +128,15 @@ public class CrawlController {
                 
             } catch(Exception e){
                 LOGGER.error("An unexpected error occurred", e);
-                res.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                res.status(HttpResponseCode.INTERNAL_SERVER_ERROR);
 
                 return GSON.toJson(new CrawlErrorResponse(
-                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    HttpResponseCode.INTERNAL_SERVER_ERROR, 
                     "Internal Server Error", 
                     "", 
                     req.pathInfo()
                 ));
             }
         });
-
-        
     }
-
 }
