@@ -18,8 +18,11 @@ public class Search {
         this.urls = new HashSet<>();
     }
 
-    public Search(String id) {
-        this.id = id;
+    public Search(String keyword) {
+        this.id = null;
+        this.keyword = keyword;
+        this.status = Status.ACTIVE;
+        this.urls = new HashSet<>();
     }
 
     public Set<String> getUrls() {
@@ -51,4 +54,8 @@ public class Search {
                Objects.equals(keyword, search.keyword) &&
                Objects.equals(status, search.status);
     }
+
+     public void setId(String id) {
+        this.id = id;
+     }
 }

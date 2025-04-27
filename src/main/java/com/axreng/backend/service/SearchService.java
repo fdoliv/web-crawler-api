@@ -3,36 +3,52 @@ package com.axreng.backend.service;
 import com.axreng.backend.model.Search;
 import com.axreng.backend.model.Status;
 import com.axreng.backend.repository.SearchRepository;
+import com.axreng.backend.util.IDGenerator;
 
 import java.util.List;
 import java.util.Optional;
 
 public class SearchService {
 
-    private final SearchRepository repository;
+    private final SearchRepository searchRepository;
 
-    public SearchService(SearchRepository repository) {
-        this.repository = repository;
+    public SearchService(SearchRepository searchRepository) {
+        this.searchRepository = searchRepository;
     }
 
     public SearchService() {
-        this.repository = new SearchRepository();
+        this.searchRepository = new SearchRepository();
     }
 
-    public void saveSearch(Search search) {
-        repository.save(search);
+    public Search saveSearch(Search search) {
+        if (search.getId() == null || search.getId().isBlank()) {
+            var id = generateUniqueId();
+            search.setId(id);
+        }
+        searchRepository.save(search);
+        return search;
+    }
+
+    private String generateUniqueId() {
+        var id = IDGenerator.generateAlphanumericID();
+        var search = searchRepository.findById(id);
+        while (search.isPresent()) {
+            id = IDGenerator.generateAlphanumericID();
+            search = searchRepository.findById(id);
+        }
+        return id;
     }
 
     public Optional<Search> findSearchById(String id) {
-        return repository.findById(id);
+        return searchRepository.findById(id);
     }
 
     public List<Search> findAllSearches() {
-        return repository.findAll();
+        return searchRepository.findAll();
     }
 
     public Search updateSearchStatus(String id, Status status) {
-        Optional<Search> optionalSearch = repository.findById(id);
+        Optional<Search> optionalSearch = searchRepository.findById(id);
 
         
         if (optionalSearch.isEmpty()) {
@@ -41,11 +57,15 @@ public class SearchService {
 
         Search search = optionalSearch.get();
         Search updatedSearch = new Search(search.getId(), search.getKeyword(), status);
-        repository.save(updatedSearch);
+        searchRepository.save(updatedSearch);
         return updatedSearch;
     }
 
     public void deleteSearchById(String id) {
-        repository.deleteById(id);
+        searchRepository.deleteById(id);
+    }
+
+    public Optional<Search>  findSearchByKeyword(String keyword) {
+        return searchRepository.findByKeyword(keyword);
     }
 }

@@ -115,4 +115,33 @@ class SearchRepositoryTest {
         // Then
         assertThat(result.isPresent(), is(false));
     }
+
+    @Test
+    @DisplayName("Should find a search by keyword when it exists")
+    void shouldFindByKeywordWhenExists() {
+        // Given
+        Search search = new Search("1", "keyword1", Status.ACTIVE);
+        repository.save(search);
+
+        // When
+        Optional<Search> result = repository.findByKeyword("keyword1");
+
+        // Then
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get(), is(equalTo(search)));
+    }
+
+    @Test
+    @DisplayName("Should return empty when searching by keyword that does not exist")
+    void shouldReturnEmptyWhenKeywordDoesNotExist() {
+        // Given
+        Search search = new Search("1", "keyword1", Status.ACTIVE);
+        repository.save(search);
+
+        // When
+        Optional<Search> result = repository.findByKeyword("nonexistent");
+
+        // Then
+        assertThat(result.isPresent(), is(false));
+    }
 }

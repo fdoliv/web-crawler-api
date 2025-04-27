@@ -17,6 +17,12 @@ public class SearchRepository {
     public Optional<Search> findById(String id) {
         return Optional.ofNullable(database.get(id));
     }
+
+    public Optional<Search> findByKeyword(String keyword) {
+        return database.values().stream()
+            .filter(search -> keyword.equals(search.getKeyword()))
+            .findFirst();
+    }
     
     public boolean deleteById(String id) {
         return database.remove(id) != null;
