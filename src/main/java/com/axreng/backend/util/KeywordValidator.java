@@ -8,7 +8,7 @@ public class KeywordValidator {
     private static final int MAX_LENGTH = 32;
 
     public static void validate(String input) throws KeywordValidatorException {
-
+        
         if (input == null) {
             throw new KeywordValidatorException("Invalid keyword: cannot be null.");
         }

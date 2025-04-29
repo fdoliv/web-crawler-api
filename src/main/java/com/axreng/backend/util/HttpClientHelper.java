@@ -1,4 +1,4 @@
-package com.axreng.backend.helper;
+package com.axreng.backend.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;

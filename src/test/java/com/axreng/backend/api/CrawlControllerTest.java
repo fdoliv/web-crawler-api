@@ -5,8 +5,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.axreng.backend.helper.HttpClientHelper;
 import com.axreng.backend.helper.JsonHelper;
+import com.axreng.backend.util.HttpClientHelper;
 import com.axreng.backend.util.HttpMethods;
 import com.axreng.backend.util.HttpResponseCode;
 
@@ -22,7 +22,7 @@ class CrawlControllerTest {
 
     @BeforeAll
     static void setUp() {
-        CrawlController.getInstance().initializeRoutes();
+        CrawlController.initializeRoutes();
         spark.Spark.awaitInitialization();
     }
 

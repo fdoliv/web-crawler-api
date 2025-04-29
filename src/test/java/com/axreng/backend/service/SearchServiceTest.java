@@ -95,7 +95,7 @@ class SearchServiceTest {
         service.saveSearch(search);
 
         // When
-        Search updatedSearch = service.updateSearchStatus("1", Status.DONE);
+        Search updatedSearch = service.updateSearchStatus("1");
 
         // Then
         assertThat(updatedSearch.getStatus(), is(Status.DONE));

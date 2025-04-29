@@ -8,13 +8,12 @@ import java.util.Optional;
 import com.axreng.backend.exception.KeywordValidatorException;
 import com.axreng.backend.exception.SearchIDValidatorException;
 import com.axreng.backend.model.Search;
+import com.axreng.backend.service.CrawlerService;
 import com.axreng.backend.service.SearchService;
 import com.axreng.backend.util.HttpResponseCode;
 import com.axreng.backend.util.KeywordValidator;
 import com.axreng.backend.util.SearchIDValidator;
 import com.google.gson.Gson;
-
-import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,22 +24,23 @@ public class CrawlController {
 
     private static final Gson GSON = new Gson();
     private static SearchService searchService; 
+    private static CrawlerService crawlService; 
     private static CrawlController instance;
 
     private CrawlController() {
 
         searchService = new SearchService();
+        crawlService = new CrawlerService(searchService);
     }
-
-    public static CrawlController getInstance() {
+    public static CrawlController getInstance(){
         if (instance == null) {
             instance = new CrawlController();
         }
         return instance;
     }
     
-    public void initializeRoutes() {
-
+    public static void initializeRoutes() {
+        getInstance();
 
         get("/crawl/:id", (req, res) -> {
             res.type("application/json");
@@ -94,17 +94,23 @@ public class CrawlController {
         post("/crawl", (req, res) ->{
 
             res.type("application/json");
+            LOGGER.info("Received request to crawl with body: {}", req.body());
 
             try {
                 CrawlRequest crawlRequest = GSON.fromJson(req.body(), CrawlRequest.class);
+                LOGGER.info("Validating the search keyword {}", crawlRequest.getKeyword());
                 KeywordValidator.validate(crawlRequest.getKeyword());
+                LOGGER.info("The search keyword {} is valid.", crawlRequest.getKeyword());
 
+                LOGGER.info("Searching for existing search with keyword {}", crawlRequest.getKeyword());
                 Optional<Search> optionalSearch = searchService.findSearchByKeyword(crawlRequest.getKeyword());
                 
                 if (optionalSearch.isPresent()) {
+                    LOGGER.info("Found existing search with ID {}", optionalSearch.get().getId());
                     res.status(HttpResponseCode.OK);
                     return GSON.toJson(new CrawlResponse(optionalSearch.get().getId()));
                 }
+                LOGGER.info("No existing search found. Creating a new search with keyword {}", crawlRequest.getKeyword());
 
                 var search = new Search(crawlRequest.getKeyword());
                 search = searchService.saveSearch(search);
@@ -113,10 +119,12 @@ public class CrawlController {
                 crawlResponse.setId(search.getId());
 
                 res.status(HttpResponseCode.OK);
-                
+                LOGGER.info("Search registred. Crawl response JSON: {}", crawlResponse.toJson());
+
+                crawlService.startCrawl(search.getId());
                 return crawlResponse.toJson();
             } catch (KeywordValidatorException kve) {
-
+                LOGGER.info("Keyword validation failed. {\"message\":\"{}\"}", kve.getMessage());
                 res.status(HttpResponseCode.BAD_REQUEST);
 
                 return GSON.toJson(new CrawlErrorResponse(

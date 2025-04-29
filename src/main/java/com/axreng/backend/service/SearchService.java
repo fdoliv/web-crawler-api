@@ -47,7 +47,7 @@ public class SearchService {
         return searchRepository.findAll();
     }
 
-    public Search updateSearchStatus(String id, Status status) {
+    public Search updateSearchStatus(String id) {
         Optional<Search> optionalSearch = searchRepository.findById(id);
 
         
@@ -56,9 +56,10 @@ public class SearchService {
         }
 
         Search search = optionalSearch.get();
-        Search updatedSearch = new Search(search.getId(), search.getKeyword(), status);
-        searchRepository.save(updatedSearch);
-        return updatedSearch;
+        search.setStatus(Status.DONE);
+        
+        searchRepository.save(search);
+        return search;
     }
 
     public void deleteSearchById(String id) {
@@ -67,5 +68,16 @@ public class SearchService {
 
     public Optional<Search>  findSearchByKeyword(String keyword) {
         return searchRepository.findByKeyword(keyword);
+    }
+
+    public void addUrlToSearch(String id, String url) {
+        Optional<Search> optionalSearch = searchRepository.findById(id);
+        if (optionalSearch.isPresent()) {
+            Search search = optionalSearch.get();
+            search.getUrls().add(url);
+            searchRepository.save(search);
+        } else {
+            throw new IllegalArgumentException("Search with ID " + id + " not found.");
+        }
     }
 }
