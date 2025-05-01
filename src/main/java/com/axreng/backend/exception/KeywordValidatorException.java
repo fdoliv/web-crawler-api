@@ -1,6 +1,6 @@
 package com.axreng.backend.exception;
 
-public class KeywordValidatorException extends Exception {
+public class KeywordValidatorException extends ValidationException {
     public KeywordValidatorException(String message) {
         super(message);
     }
