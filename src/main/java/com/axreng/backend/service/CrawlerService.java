@@ -19,11 +19,12 @@ public class CrawlerService {
     private final SearchService repositoryService;
     private final ExecutorService executor;
     private final int maxThreads;
-    private final Map<String, CrawlJob> activeJobs = new ConcurrentHashMap<>();
+    private final Map<String, CrawlJob> activeJobs;
     private final AppConfig appConfig = AppConfig.getInstance();
     private final KeywordSearchService keywordSearchService;
     private final LinkExtractorService linkExtractorService;
     private final HttpClientService httpClientService;
+
     
     public CrawlerService(SearchService repositoryService, KeywordSearchService keywordSearchService, LinkExtractorService linkExtractorService, HttpClientService httpClientService) {
         this.repositoryService = repositoryService;
@@ -32,6 +33,7 @@ public class CrawlerService {
         this.keywordSearchService = keywordSearchService;
         this.linkExtractorService = linkExtractorService;
         this.httpClientService = httpClientService;
+        this.activeJobs = new ConcurrentHashMap<>();
     }
     
     public String startCrawl(String searchId) throws SearchNotFoundException {
@@ -97,10 +99,10 @@ public class CrawlerService {
     
     private void finishJob(String searchId) {
         CrawlJob job = activeJobs.get(searchId);
-        if (job != null && !job.hasMoreUrls() && !job.hasActiveTasks()) {
+        if (job != null && !job.hasMoreUrls() && job.isComplete()) {
+            LOGGER.info("Crawl job for search ID {} is complete. Updating status to done.", searchId);
             repositoryService.updateSearchStatus(searchId);
             activeJobs.remove(searchId);
-            LOGGER.info("Crawl job for search ID {} completed.", searchId);
         }
     }
 }

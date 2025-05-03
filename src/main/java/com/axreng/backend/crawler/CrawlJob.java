@@ -19,7 +19,6 @@ public class CrawlJob {
     private final Queue<String> pendingUrls = new ConcurrentLinkedQueue<>();
     private final Set<String> visitedUrls = ConcurrentHashMap.newKeySet();
     private final AtomicBoolean complete = new AtomicBoolean(false);
-    private int activeTasks = 0;
 
     public CrawlJob(String searchId, String keyword, String baseUrl, SearchService repoService) {
         this.searchId = searchId;
@@ -76,17 +75,9 @@ public class CrawlJob {
         return pendingUrls;
     }
 
-    public synchronized void incrementActiveTasks() {
-        activeTasks++;
-    }
-
-    public synchronized void decrementActiveTasks() {
-        activeTasks--;
-    }
-
-    public synchronized boolean hasActiveTasks() {
-        return activeTasks > 0;
-    }
+    // public synchronized boolean hasActiveTasks() {
+    //     return activeTasks > 0;
+    // }
 
     @Override
     public String toString() {
