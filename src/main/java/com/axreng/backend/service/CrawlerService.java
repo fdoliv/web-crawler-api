@@ -10,13 +10,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.axreng.backend.crawler.CrawlJob;
+import com.axreng.backend.exception.SearchNotFoundException;
 import com.axreng.backend.model.Search;
 import com.axreng.backend.util.AppConfig;
 
@@ -34,9 +34,9 @@ public class CrawlerService {
         this.executor = Executors.newFixedThreadPool(maxThreads);
     }
     
-    public String startCrawl(String searchId) {
+    public String startCrawl(String searchId) throws SearchNotFoundException {
         LOGGER.info("Starting crawl for search ID: {}", searchId);
-        Search search = repositoryService.findSearchById(searchId).get();
+        Search search = repositoryService.findSearchById(searchId);
 
         LOGGER.info("Creating a job for search ID: {}", searchId);
         CrawlJob job = new CrawlJob(searchId, search.getKeyword(), appConfig.getBaseUrl(), repositoryService);

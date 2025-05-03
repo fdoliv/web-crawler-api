@@ -6,6 +6,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.axreng.backend.helper.JsonHelper;
+import com.axreng.backend.service.CrawlerService;
+import com.axreng.backend.service.SearchService;
+import com.axreng.backend.service.ValidationService;
 import com.axreng.backend.util.HttpClientHelper;
 import com.axreng.backend.util.HttpMethods;
 import com.axreng.backend.util.HttpResponseCode;
@@ -19,10 +22,15 @@ class CrawlControllerTest {
 
     HttpClientHelper helper = HttpClientHelper.getInstance();
     private final String BASE_URL = "http://localhost:4567";
+    
 
     @BeforeAll
     static void setUp() {
-        CrawlController.initializeRoutes();
+        SearchService searchService = new SearchService();
+        ValidationService validationService = new ValidationService();
+        CrawlerService crawlerService = new CrawlerService(searchService);
+        CrawlController crawlController = new CrawlController(searchService, crawlerService, validationService);
+        crawlController.initializeRoutes();
         spark.Spark.awaitInitialization();
     }
 

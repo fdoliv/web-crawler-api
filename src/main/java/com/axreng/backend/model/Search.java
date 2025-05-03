@@ -54,9 +54,7 @@ public class Search {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Search search = (Search) o;
-        return Objects.equals(id, search.id) &&
-               Objects.equals(keyword, search.keyword) &&
-               Objects.equals(status, search.status);
+        return Objects.equals(id, search.id);
     }
 
      public void setId(String id) {

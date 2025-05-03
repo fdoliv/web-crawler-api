@@ -1,18 +1,15 @@
 package com.axreng.backend.api;
 
 import static spark.Spark.*;
-
-import java.util.ArrayList;
-import java.util.Optional;
-
-import com.axreng.backend.exception.KeywordValidatorException;
-import com.axreng.backend.exception.SearchIDValidatorException;
+import com.axreng.backend.exception.SearchAlreadyExistsExeption;
+import com.axreng.backend.exception.SearchNotFoundException;
+import com.axreng.backend.exception.ValidationException;
 import com.axreng.backend.model.Search;
 import com.axreng.backend.service.CrawlerService;
 import com.axreng.backend.service.SearchService;
+import com.axreng.backend.service.ValidationService;
 import com.axreng.backend.util.HttpResponseCode;
-import com.axreng.backend.util.KeywordValidator;
-import com.axreng.backend.util.SearchIDValidator;
+import com.axreng.backend.util.ResponseHelper;
 import com.google.gson.Gson;
 
 import org.slf4j.Logger;
@@ -21,68 +18,59 @@ import org.slf4j.LoggerFactory;
 public class CrawlController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlController.class);
-
     private static final Gson GSON = new Gson();
-    private static SearchService searchService; 
-    private static CrawlerService crawlService; 
-    private static CrawlController instance;
+    private final SearchService searchService; 
+    private final CrawlerService crawlerService; 
+    private final ValidationService validationService;
 
-    private CrawlController() {
-
-        searchService = new SearchService();
-        crawlService = new CrawlerService(searchService);
-    }
-    public static CrawlController getInstance(){
-        if (instance == null) {
-            instance = new CrawlController();
-        }
-        return instance;
+    public CrawlController(SearchService searchService, 
+            CrawlerService crawlerService, ValidationService validationService) {
+        this.searchService = searchService;
+        this.crawlerService = crawlerService;
+        this.validationService = validationService;
     }
     
-    public static void initializeRoutes() {
-        getInstance();
+    public void initializeRoutes() {
 
         get("/crawl/:id", (req, res) -> {
             res.type("application/json");
 
             try {
                 String id = req.params("id");
-                SearchIDValidator.validate(id);
-                Optional<Search> optionalSearch = searchService.findSearchById(id);
-                if (optionalSearch.isPresent()) {
-
-                    CrawlStatusResponse crawlStatusResponse = new CrawlStatusResponse();
-                    crawlStatusResponse.setId(optionalSearch.get().getId());
-                    crawlStatusResponse.setStatus(optionalSearch.get().getStatus().getValue());
-                    crawlStatusResponse.setUrls(new ArrayList<>(optionalSearch.get().getUrls()));    
-                    res.status(HttpResponseCode.OK);
-                    return GSON.toJson(crawlStatusResponse, CrawlStatusResponse.class);
-                }
-                res.status(HttpResponseCode.NOT_FOUND);
-                return GSON.toJson(new CrawlErrorResponse(
-                        HttpResponseCode.NOT_FOUND, 
-                        "Not Found", 
-                        "Search with ID " + id + " not found", 
-                        req.pathInfo()
-                ));
+                LOGGER.info("Validating the search ID {}", id);
+                validationService.validateSearchId(id);
+                LOGGER.info("The search ID {} is valid.", id);
+                res.status(HttpResponseCode.OK);
+                Search search = searchService.findSearchById(id);
+                LOGGER.info("Search with ID {} found. Status: {}", id, search.getStatus());
+                return ResponseHelper.createCrawlStatusResponse(search);
                 
-                
-            } catch (SearchIDValidatorException sive){
+            } catch (ValidationException ve){
                 res.status(HttpResponseCode.BAD_REQUEST);
 
-                return GSON.toJson(new CrawlErrorResponse(
+                return GSON.toJson(new CrawlerErrorResponse(
                     HttpResponseCode.BAD_REQUEST, 
                     "Bad Request", 
-                    sive.getMessage(), 
+                    ve.getMessage(), 
                     req.pathInfo()
                 ));
+            } catch (SearchNotFoundException snfe) {
+                LOGGER.info("Search with ID {} not found. {}", req.params("id"), snfe.getMessage());
+                res.status(HttpResponseCode.NOT_FOUND);
+
+                return ResponseHelper.createErrorResponse(
+                    HttpResponseCode.NOT_FOUND, 
+                    "Not Found", 
+                    snfe.getMessage(), 
+                    req.pathInfo()
+                ); 
             }
             
             catch (Exception e) {
                 LOGGER.error("An unexpected error occurred", e);
                 res.status(HttpResponseCode.INTERNAL_SERVER_ERROR);
 
-                return GSON.toJson(new CrawlErrorResponse(
+                return GSON.toJson(new CrawlerErrorResponse(
                     HttpResponseCode.INTERNAL_SERVER_ERROR, 
                     "Internal Server Error", 
                     "", 
@@ -95,55 +83,47 @@ public class CrawlController {
 
             res.type("application/json");
             LOGGER.info("Received request to crawl with body: {}", req.body());
-
+            CrawlerRequest crawlRequest = GSON.fromJson(req.body(), CrawlerRequest.class);
+            LOGGER.debug("Crawl request parsed: {}", crawlRequest.toString());
             try {
-                CrawlRequest crawlRequest = GSON.fromJson(req.body(), CrawlRequest.class);
-                LOGGER.info("Validating the search keyword {}", crawlRequest.getKeyword());
-                KeywordValidator.validate(crawlRequest.getKeyword());
-                LOGGER.info("The search keyword {} is valid.", crawlRequest.getKeyword());
-
-                LOGGER.info("Searching for existing search with keyword {}", crawlRequest.getKeyword());
-                Optional<Search> optionalSearch = searchService.findSearchByKeyword(crawlRequest.getKeyword());
-                
-                if (optionalSearch.isPresent()) {
-                    LOGGER.info("Found existing search with ID {}", optionalSearch.get().getId());
-                    res.status(HttpResponseCode.OK);
-                    return GSON.toJson(new CrawlResponse(optionalSearch.get().getId()));
-                }
                 LOGGER.info("No existing search found. Creating a new search with keyword {}", crawlRequest.getKeyword());
 
+                LOGGER.info("Validating the search keyword {}", crawlRequest.getKeyword());
+                validationService.validateKeyword(crawlRequest.getKeyword());
+
+                LOGGER.info("The search keyword {} is valid.", crawlRequest.getKeyword());
+                
                 var search = new Search(crawlRequest.getKeyword());
                 search = searchService.saveSearch(search);
 
-                CrawlResponse crawlResponse = new CrawlResponse();
-                crawlResponse.setId(search.getId());
+                LOGGER.info("Search created with ID {}", search.getId());
+                LOGGER.info("Starting crawl for search with ID {}", search.getId());
+                crawlerService.startCrawl(search.getId());
 
                 res.status(HttpResponseCode.OK);
-                LOGGER.info("Search registred. Crawl response JSON: {}", crawlResponse.toJson());
-
-                crawlService.startCrawl(search.getId());
-                return crawlResponse.toJson();
-            } catch (KeywordValidatorException kve) {
-                LOGGER.info("Keyword validation failed. {\"message\":\"{}\"}", kve.getMessage());
+                return ResponseHelper.createSuccessResponse(search.getId());
+            } catch (ValidationException ve) {
+                LOGGER.info("Keyword validation failed. {\"message\":\"{}\"}", ve.getMessage());
                 res.status(HttpResponseCode.BAD_REQUEST);
-
-                return GSON.toJson(new CrawlErrorResponse(
-                    HttpResponseCode.BAD_REQUEST, 
-                    "Bad Request", 
-                    kve.getMessage(), 
-                    req.pathInfo()
-                ));
+                return ResponseHelper.createErrorResponse(HttpResponseCode.BAD_REQUEST, "Bad Request", ve.getMessage(), req.pathInfo());
                 
-            } catch(Exception e){
+            } catch (SearchAlreadyExistsExeption safe){
+                
+                LOGGER.info("Retrieving existing search data for keyword: {}", crawlRequest.getKeyword());
+                Search search = searchService.findSearchByKeyword(crawlRequest.getKeyword());                
+                res.status(HttpResponseCode.OK);
+                return ResponseHelper.createSuccessResponse(search.getId());
+            } 
+            catch(Exception e){
                 LOGGER.error("An unexpected error occurred", e);
                 res.status(HttpResponseCode.INTERNAL_SERVER_ERROR);
 
-                return GSON.toJson(new CrawlErrorResponse(
+                return ResponseHelper.createErrorResponse(
                     HttpResponseCode.INTERNAL_SERVER_ERROR, 
                     "Internal Server Error", 
                     "", 
                     req.pathInfo()
-                ));
+                ); 
             }
         });
     }
