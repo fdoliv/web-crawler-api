@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.axreng.backend.exception.SearchNotFoundException;
 import com.axreng.backend.service.SearchService;
@@ -18,7 +19,10 @@ public class CrawlJob {
     private final SearchService repoService;
     private final Queue<String> pendingUrls = new ConcurrentLinkedQueue<>();
     private final Set<String> visitedUrls = ConcurrentHashMap.newKeySet();
-    private final AtomicBoolean complete = new AtomicBoolean(false);
+    private final AtomicBoolean isComplete = new AtomicBoolean(false);
+    private final AtomicInteger activeTasks = new AtomicInteger(0);
+    private final AtomicInteger processedUrls = new AtomicInteger(0);
+    // private final AtomicInteger scheduledUrls = new AtomicInteger(0);
 
     public CrawlJob(String searchId, String keyword, String baseUrl, SearchService repoService) {
         this.searchId = searchId;
@@ -29,11 +33,12 @@ public class CrawlJob {
         this.repoService = repoService;
     }
     
-    public synchronized String getNextUrl() {
+    public String getNextUrl() {
+        // scheduledUrls.decrementAndGet();
         return pendingUrls.poll();
     }
     
-    public synchronized void addNewUrls(List<String> urls) {
+    public void addNewUrls(List<String> urls) {
         for (String url : urls) {
             // add url only if not visited
             if (!visitedUrls.contains(url)) {
@@ -41,6 +46,7 @@ public class CrawlJob {
                 pendingUrls.add(url);
             }
         }
+        // scheduledUrls.addAndGet(urls.size());
     }
     
     public boolean hasMoreUrls() {
@@ -48,7 +54,7 @@ public class CrawlJob {
     }
     
     public boolean isComplete() {
-        return pendingUrls.isEmpty() && !complete.getAndSet(true);
+        return getPendingUrlsCount() == 0;
     }
     
     public String getSearchId() {
@@ -75,8 +81,19 @@ public class CrawlJob {
         return pendingUrls;
     }
 
-    // public synchronized boolean hasActiveTasks() {
-    //     return activeTasks > 0;
+    // public boolean hasActiveTasks() {
+    //     return activeTasks.get() > 0;
+    // }
+
+    // public void incrementActiveTasks() {
+    //     activeTasks.incrementAndGet();
+    // }
+
+    // public void decrementActiveTasks() {
+    //     activeTasks.decrementAndGet();
+    //     if (activeTasks.get() == 0 && isComplete()) {
+    //         isComplete.set(true);
+    //     }
     // }
 
     @Override
@@ -89,5 +106,13 @@ public class CrawlJob {
 
     public void addUrlToResults(String url) throws SearchNotFoundException {
         repoService.addUrlToSearch(getSearchId(), url);
+    }
+
+    public int getPendingUrlsCount() {
+        return pendingUrls.size();
+    }
+
+    public int getProcessedUrlsCount() {
+        return visitedUrls.size();
     }
 }

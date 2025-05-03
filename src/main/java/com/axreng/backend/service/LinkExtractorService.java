@@ -34,7 +34,7 @@ public class LinkExtractorService {
         while (matcher.find()) {
             String link = matcher.group(1);
 
-            LOGGER.debug("paths founded: {}", link);
+            LOGGER.trace("Path founded: {}", link);
             if (!link.startsWith("http")) {
                 link = resolveRelativeUrl(currentUrl, link);
             }

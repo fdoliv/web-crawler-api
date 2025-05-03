@@ -17,7 +17,7 @@ public class HttpResponseReader {
             inputStream = connection.getErrorStream();
         }
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            return reader.lines().collect(Collectors.joining("\n"));
+            return reader.lines().collect(Collectors.joining("\n")).trim();
         }
     }
 }

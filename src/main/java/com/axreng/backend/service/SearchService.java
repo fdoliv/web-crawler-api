@@ -8,7 +8,6 @@ import com.axreng.backend.repository.SearchRepository;
 import com.axreng.backend.util.IDGenerator;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +48,7 @@ public class SearchService {
     }
 
     public Search findSearchById(String id) throws SearchNotFoundException {
-        System.out.println("Attempting to find search with ID: " + id);
+        LOGGER.debug("Attempting to find search with ID: {}", id);
         var errorMessage = String.format("Search with ID %s not found", id);
         Search search = searchRepository.findById(id).orElseThrow(() -> {
 
@@ -62,22 +61,11 @@ public class SearchService {
         return searchRepository.findAll();
     }
 
-    public Search updateSearchStatus(String id) {
-        Optional<Search> optionalSearch = searchRepository.findById(id);
-
-        if (optionalSearch.isEmpty()) {
-            throw new IllegalArgumentException("Search with ID " + id + " not found.");
-        }
-
-        Search search = optionalSearch.get();
+    public Search updateSearchStatus(String id) throws SearchNotFoundException {
+        Search search = findSearchById(id);
         search.setStatus(Status.DONE);
-
         searchRepository.save(search);
         return search;
-    }
-
-    public void deleteSearchById(String id) {
-        searchRepository.deleteById(id);
     }
 
     public Search findSearchByKeyword(String keyword) throws SearchNotFoundException {

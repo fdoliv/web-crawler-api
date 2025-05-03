@@ -28,7 +28,7 @@ public class ResponseHelper {
     }
 
     public static String createCrawlStatusResponse(Search searchStatus) {
-        LOGGER.debug("Creating CrawlerStatusResponse for Search ID: {}", searchStatus.getId());
+        LOGGER.trace("Creating CrawlerStatusResponse for Search ID: {}", searchStatus.getId());
         
         CrawlerStatusResponse crawlStatusResponse = new CrawlerStatusResponse();
         crawlStatusResponse.setId(searchStatus.getId());
@@ -37,7 +37,7 @@ public class ResponseHelper {
         List<String> urls = new ArrayList<>(searchStatus.getUrls());
         crawlStatusResponse.setUrls(urls);
         
-        LOGGER.debug("CrawlerStatusResponse created with ID: {}, Status: {}, URLs: {}", 
+        LOGGER.trace("CrawlerStatusResponse created with ID: {}, Status: {}, URLs: {}", 
                      crawlStatusResponse.getId(), 
                      crawlStatusResponse.getStatus(), 
                      crawlStatusResponse.getUrls());

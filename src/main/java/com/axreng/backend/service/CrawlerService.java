@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +17,13 @@ import com.axreng.backend.util.AppConfig;
 public class CrawlerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlerService.class);
     private final SearchService repositoryService;
-    private final ExecutorService executor;
+    private final ThreadPoolExecutor executor;
     private final Map<String, CrawlJob> activeJobs;
     private final AppConfig appConfig;
     private final KeywordSearchService keywordSearchService;
     private final LinkExtractorService linkExtractorService;
     private final HttpClientService httpClientService;
+    private final ThreadMonitorService threadMonitorService;
 
     
     public CrawlerService(SearchService repositoryService, 
@@ -31,15 +32,17 @@ public class CrawlerService {
             HttpClientService httpClientService, AppConfig appConfig) {
         this.repositoryService = repositoryService;
         this.appConfig = appConfig;
-        this.executor = Executors.newFixedThreadPool(appConfig.getMaxThreads());
+        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(appConfig.getMaxThreads());
         this.keywordSearchService = keywordSearchService;
         this.linkExtractorService = linkExtractorService;
         this.httpClientService = httpClientService;
         this.activeJobs = new ConcurrentHashMap<>();
+        this.threadMonitorService = new ThreadMonitorService(executor, activeJobs);
 
     }
     
     public String startCrawl(String searchId) throws SearchNotFoundException {
+        threadMonitorService.monitorThreads();
         LOGGER.info("Starting crawl for search ID: {}", searchId);
         Search search = repositoryService.findSearchById(searchId);
 
@@ -74,7 +77,7 @@ public class CrawlerService {
                     
                 });
             }
-        }
+        }  
     }
     
     private synchronized void processUrl(CrawlJob job, String url) {
@@ -90,13 +93,16 @@ public class CrawlerService {
         } catch (Exception e) {
             LOGGER.error("Error processing URL: {}", url, e);
         }
-        synchronized (job){
-            if (job.hasMoreUrls()) {
-                scheduleNextBatch();
-            } else if (job.isComplete()) {
-                finishJob(job.getSearchId());
+        finally {
+            synchronized (job){
+                if (job.hasMoreUrls()) {
+                    scheduleNextBatch();
+                } else if (job.isComplete()) {
+                    finishJob(job.getSearchId());
+                }
             }
         }
+       
 
     }
     
@@ -104,7 +110,11 @@ public class CrawlerService {
         CrawlJob job = activeJobs.get(searchId);
         if (job != null && !job.hasMoreUrls() && job.isComplete()) {
             LOGGER.info("Crawl job for search ID {} is complete. Updating status to done.", searchId);
-            repositoryService.updateSearchStatus(searchId);
+            try {
+                repositoryService.updateSearchStatus(searchId);
+            } catch (SearchNotFoundException e) {
+                LOGGER.error("Error updating search status for ID {}: {}", searchId, e.getMessage());
+            }
             activeJobs.remove(searchId);
         }
     }
