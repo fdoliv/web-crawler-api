@@ -12,6 +12,7 @@ import com.axreng.backend.service.KeywordSearchService;
 import com.axreng.backend.service.LinkExtractorService;
 import com.axreng.backend.service.SearchService;
 import com.axreng.backend.service.ValidationService;
+import com.axreng.backend.util.AppConfig;
 import com.axreng.backend.util.HttpClientHelper;
 import com.axreng.backend.util.HttpMethods;
 import com.axreng.backend.util.HttpResponseCode;
@@ -32,12 +33,13 @@ class CrawlControllerTest {
 
     @BeforeAll
     static void setUp() {
+        AppConfig appConfig = new AppConfig();
         SearchService searchService = new SearchService();
         ValidationService validationService = new ValidationService();
         KeywordSearchService keywordSearchService = new KeywordSearchService();
         LinkExtractorService linkExtractorService = new LinkExtractorService();
         HttpClientService httpClientService = new HttpClientService();
-        CrawlerService crawlerService = new CrawlerService(searchService, keywordSearchService, linkExtractorService, httpClientService);
+        CrawlerService crawlerService = new CrawlerService(searchService, keywordSearchService, linkExtractorService, httpClientService, appConfig);
         CrawlController crawlController = new CrawlController(searchService, crawlerService, validationService);
         crawlController.initializeRoutes();
         spark.Spark.awaitInitialization();

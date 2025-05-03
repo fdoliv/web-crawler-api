@@ -18,7 +18,7 @@ public class Main {
 
     public static void main(String[] args) {
         // Inicializar a aplicação
-        AppConfig.getInstance();
+        AppConfig appConfig = new AppConfig();
         LOGGER.info("Starting application...");
         
         SearchService searchService = new SearchService();
@@ -27,7 +27,7 @@ public class Main {
         LinkExtractorService linkExtractorService = new LinkExtractorService();
         HttpClientService httpClientService = new HttpClientService();
         
-        CrawlerService crawlerService = new CrawlerService(searchService, keywordSearchService, linkExtractorService, httpClientService);
+        CrawlerService crawlerService = new CrawlerService(searchService, keywordSearchService, linkExtractorService, httpClientService, appConfig);
 
         CrawlController crawlController = new CrawlController(searchService, crawlerService, validationService);
         crawlController.initializeRoutes();

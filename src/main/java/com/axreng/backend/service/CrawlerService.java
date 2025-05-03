@@ -18,22 +18,25 @@ public class CrawlerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlerService.class);
     private final SearchService repositoryService;
     private final ExecutorService executor;
-    private final int maxThreads;
     private final Map<String, CrawlJob> activeJobs;
-    private final AppConfig appConfig = AppConfig.getInstance();
+    private final AppConfig appConfig;
     private final KeywordSearchService keywordSearchService;
     private final LinkExtractorService linkExtractorService;
     private final HttpClientService httpClientService;
 
     
-    public CrawlerService(SearchService repositoryService, KeywordSearchService keywordSearchService, LinkExtractorService linkExtractorService, HttpClientService httpClientService) {
+    public CrawlerService(SearchService repositoryService, 
+            KeywordSearchService keywordSearchService, 
+            LinkExtractorService linkExtractorService, 
+            HttpClientService httpClientService, AppConfig appConfig) {
         this.repositoryService = repositoryService;
-        this.maxThreads = Runtime.getRuntime().availableProcessors() + 1;
-        this.executor = Executors.newFixedThreadPool(maxThreads);
+        this.appConfig = appConfig;
+        this.executor = Executors.newFixedThreadPool(appConfig.getMaxThreads());
         this.keywordSearchService = keywordSearchService;
         this.linkExtractorService = linkExtractorService;
         this.httpClientService = httpClientService;
         this.activeJobs = new ConcurrentHashMap<>();
+
     }
     
     public String startCrawl(String searchId) throws SearchNotFoundException {
@@ -57,7 +60,7 @@ public class CrawlerService {
         if (totalJobs == 0) return;
         
         // Calcular quantas tarefas cada job deve receber
-        int tasksPerJob = Math.max(1, maxThreads / totalJobs);
+        int tasksPerJob = Math.max(1, appConfig.getMaxThreads() / totalJobs);
         // tasksPerJob = 2;
         LOGGER.debug("Total tasks per Job: {}", tasksPerJob);
 

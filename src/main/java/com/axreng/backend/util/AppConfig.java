@@ -7,12 +7,11 @@ import org.slf4j.LoggerFactory;
 public final class AppConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfig.class);
-    private static AppConfig instance;
 
     private final String baseUrl;
-    private final int threadCount;
+    private final int maxThreads;
     
-    private AppConfig() {
+    public AppConfig() {
         LOGGER.info("Initializing application configuration...");
 
         this.baseUrl = "http://127.0.0.1:8080/"; // TODO: change to this = System.getenv("BASE_URL");
@@ -23,23 +22,17 @@ public final class AppConfig {
             throw new IllegalStateException(message);
         }
         LOGGER.info("Base URL: {}", this.baseUrl);
-        this.threadCount = ConfigValidator.validateThreadCount(System.getenv("THREAD_COUNT"));
+        this.maxThreads = ConfigValidator.validateThreadCount(System.getenv("THREAD_COUNT"));
 
-        LOGGER.trace("BASE_URL: {}\tTHREAD_COUNT: {}", this.baseUrl, this.threadCount);
+        LOGGER.trace("BASE_URL: {}\tTHREAD_COUNT: {}", this.baseUrl, this.maxThreads);
     }
     
-    public static AppConfig getInstance() {
-        if (instance == null) {
-            instance = new AppConfig();
-        }
-        return instance;
-    }
-    
+   
     public String getBaseUrl() {
         return baseUrl;
     }
     
-    public int getThreadCount() {
-        return threadCount;
+    public int getMaxThreads() {
+        return maxThreads;
     }
 }
