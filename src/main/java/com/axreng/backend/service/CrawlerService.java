@@ -1,17 +1,11 @@
 package com.axreng.backend.service;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Pattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +21,17 @@ public class CrawlerService {
     private final int maxThreads;
     private final Map<String, CrawlJob> activeJobs = new ConcurrentHashMap<>();
     private final AppConfig appConfig = AppConfig.getInstance();
+    private final KeywordSearchService keywordSearchService;
+    private final LinkExtractorService linkExtractorService;
+    private final HttpClientService httpClientService;
     
-    public CrawlerService(SearchService repositoryService) {
+    public CrawlerService(SearchService repositoryService, KeywordSearchService keywordSearchService, LinkExtractorService linkExtractorService, HttpClientService httpClientService) {
         this.repositoryService = repositoryService;
         this.maxThreads = Runtime.getRuntime().availableProcessors() + 1;
         this.executor = Executors.newFixedThreadPool(maxThreads);
+        this.keywordSearchService = keywordSearchService;
+        this.linkExtractorService = linkExtractorService;
+        this.httpClientService = httpClientService;
     }
     
     public String startCrawl(String searchId) throws SearchNotFoundException {
@@ -76,18 +76,12 @@ public class CrawlerService {
 
         LOGGER.debug("Processing URL: {}", url);
         try {
-            // Processar a URL, verificar o termo, extrair links
-            String content = fetchContent(url);
-            boolean containsKeyword = checkForKeyword(content, job.getKeyword());
-            
-            if (containsKeyword) {
-                repositoryService.addUrlToSearch(job.getSearchId(), url);
+            String content = httpClientService.fetchContent(url);
+            if (keywordSearchService.containsKeyword(content, job.getKeyword())) {
+                job.addUrlToResults(url);
             }
-            
-            // Extrair e adicionar novos links à fila do job
-            List<String> links = extractLinks(content, url, job.getBaseUrl());
+            List<String> links = linkExtractorService.extractLinks(content, url, job.getBaseUrl());
             job.addNewUrls(links);
-            
         } catch (Exception e) {
             LOGGER.error("Error processing URL: {}", url, e);
         }
@@ -107,77 +101,6 @@ public class CrawlerService {
             repositoryService.updateSearchStatus(searchId);
             activeJobs.remove(searchId);
             LOGGER.info("Crawl job for search ID {} completed.", searchId);
-        }
-    }
-    
-    private String fetchContent(String url) throws Exception {
-        LOGGER.debug("Fetching content from URL: {}", url);
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        connection.setRequestMethod("GET");
-        connection.setConnectTimeout(5000); // Timeout de conexão
-        connection.setReadTimeout(5000);    // Timeout de leitura
-
-        int responseCode = connection.getResponseCode();
-        if (responseCode != 200) {
-            throw new RuntimeException("Failed to fetch content. HTTP response code: " + responseCode);
-        }
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            StringBuilder content = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
-            }
-            return content.toString();
-        }
-    }
-
-    private boolean checkForKeyword(String content, String keyword) {
-        LOGGER.debug("Checking for keyword '{}' in content.", keyword);
-        if (content == null || keyword == null) {
-            return false;
-        }
-        return content.toLowerCase().contains(keyword.toLowerCase());
-    }
-
-    private List<String> extractLinks(String content, String currentUrl, String baseUrl) {
-        LOGGER.debug("Extracting links from content for base URL: {}", baseUrl);
-        // LOGGER.debug("Content: {}", content);
-        List<String> links = new ArrayList<>();
-        if (content == null || baseUrl == null) {
-            return links;
-        }
-
-        var regex = "<a\\b[^>]*?\\s+href\\s*=\\s*[\"'](?!mailto:)([^\"'>]*)[\"'][^>]*>";
-        var pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-        var matcher = pattern.matcher(content);
-
-        while (matcher.find()) {
-            String link = matcher.group(1);
-
-            LOGGER.debug("paths founded: {}", link);
-            // Resolver links relativos
-            if (!link.startsWith("http")) {
-                link = resolveRelativeUrl(currentUrl, link);
-            }
-
-            // Adicionar apenas links que começam com a URL base
-            if (link.startsWith(baseUrl)) {
-                links.add(link);
-            }
-        }
-
-        LOGGER.debug("New links founded: {}", links.size());
-        return links;
-    }
-
-    private String resolveRelativeUrl(String currentUrl, String relativeUrl) {
-        try {
-            URL base = new URL(currentUrl);
-            return new URL(base, relativeUrl).toString();
-        } catch (Exception e) {
-            LOGGER.error("Failed to resolve relative URL: {}", relativeUrl, e);
-            return relativeUrl; // Retorna o link original se não puder resolver
         }
     }
 }

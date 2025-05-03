@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
 
 import com.axreng.backend.helper.JsonHelper;
 import com.axreng.backend.service.CrawlerService;
+import com.axreng.backend.service.HttpClientService;
+import com.axreng.backend.service.KeywordSearchService;
+import com.axreng.backend.service.LinkExtractorService;
 import com.axreng.backend.service.SearchService;
 import com.axreng.backend.service.ValidationService;
 import com.axreng.backend.util.HttpClientHelper;
@@ -28,7 +31,10 @@ class CrawlControllerTest {
     static void setUp() {
         SearchService searchService = new SearchService();
         ValidationService validationService = new ValidationService();
-        CrawlerService crawlerService = new CrawlerService(searchService);
+        KeywordSearchService keywordSearchService = new KeywordSearchService();
+        LinkExtractorService linkExtractorService = new LinkExtractorService();
+        HttpClientService httpClientService = new HttpClientService();
+        CrawlerService crawlerService = new CrawlerService(searchService, keywordSearchService, linkExtractorService, httpClientService);
         CrawlController crawlController = new CrawlController(searchService, crawlerService, validationService);
         crawlController.initializeRoutes();
         spark.Spark.awaitInitialization();

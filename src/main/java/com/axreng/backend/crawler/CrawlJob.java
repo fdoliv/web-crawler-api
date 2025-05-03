@@ -94,4 +94,8 @@ public class CrawlJob {
             searchId, StringUtils.escapeJson(keyword), StringUtils.escapeJson(baseUrl), pendingUrls.size()
         );
     }
+
+    public void addUrlToResults(String url) {
+        repoService.addUrlToSearch(getSearchId(), url);
+    }
 }
