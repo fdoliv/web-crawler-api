@@ -14,8 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SearchService {
-        private static final Logger LOGGER = LoggerFactory.getLogger(SearchService.class);
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchService.class);
 
     private final SearchRepository searchRepository;
 
@@ -29,44 +28,31 @@ public class SearchService {
         this.searchRepository = new SearchRepository();
     }
 
-    public Search saveSearch(Search search) throws SearchAlreadyExistsExeption {
-        LOGGER.debug("Attempting to save search with keyword: {}", search.getKeyword());
+    public String createSearch(String keyword) throws SearchAlreadyExistsExeption {
 
         try {
-            LOGGER.debug("Checking if search with keyword '{}' already exists", search.getKeyword());
-            findSearchByKeyword(search.getKeyword());
-            var message = String.format("Search with keyword %s already exists.", search.getKeyword());
+            LOGGER.debug("Checking if search with keyword '{}' already exists", keyword);
+            findSearchByKeyword(keyword);
+            var message = String.format("Search with keyword %s already exists.", keyword);
             LOGGER.warn(message);
             throw new SearchAlreadyExistsExeption(message);
         } catch (SearchNotFoundException snfe) {
-            LOGGER.debug("Search with keyword '{}' does not exist. Proceeding to save.", search.getKeyword());
-            if (search.getId() == null || search.getId().isBlank()) {
-                LOGGER.debug("Search ID is null or blank. Generating a unique ID.");
-                var id = generateUniqueId();
-                search.setId(id);
-                LOGGER.debug("Generated unique ID: {}", id);
-            }
+            LOGGER.debug("Search with keyword '{}' does not exist. Proceeding to save.", keyword);
+            String id = IDGenerator.generateUniqueId(searchRepository);
+            Search search = new Search(id, keyword, Status.ACTIVE);
             searchRepository.save(search);
-            LOGGER.info("Search with keyword '{}' and ID '{}' saved successfully.", search.getKeyword(), search.getId());
-            return search;
+            LOGGER.info("Search with keyword '{}' and ID '{}' saved successfully.", keyword,
+                    id);
+            return id;
         }
-    }
-
-    private String generateUniqueId() {
-        var id = IDGenerator.generateAlphanumericID();
-        var search = searchRepository.findById(id);
-        while (search.isPresent()) {
-            id = IDGenerator.generateAlphanumericID();
-            search = searchRepository.findById(id);
-        }
-        return id;
+        
     }
 
     public Search findSearchById(String id) throws SearchNotFoundException {
         System.out.println("Attempting to find search with ID: " + id);
         var errorMessage = String.format("Search with ID %s not found", id);
         Search search = searchRepository.findById(id).orElseThrow(() -> {
-            
+
             return new SearchNotFoundException(errorMessage);
         });
         return search;
@@ -79,14 +65,13 @@ public class SearchService {
     public Search updateSearchStatus(String id) {
         Optional<Search> optionalSearch = searchRepository.findById(id);
 
-        
         if (optionalSearch.isEmpty()) {
             throw new IllegalArgumentException("Search with ID " + id + " not found.");
         }
 
         Search search = optionalSearch.get();
         search.setStatus(Status.DONE);
-        
+
         searchRepository.save(search);
         return search;
     }
@@ -95,20 +80,21 @@ public class SearchService {
         searchRepository.deleteById(id);
     }
 
-    public Search  findSearchByKeyword(String keyword) throws SearchNotFoundException {
-        var errorMessage = String.format("Search with keyword {} not found", keyword );
-        Search search = searchRepository.findByKeyword(keyword).orElseThrow(() -> new SearchNotFoundException(errorMessage)); 
+    public Search findSearchByKeyword(String keyword) throws SearchNotFoundException {
+        var errorMessage = String.format("Search with keyword {} not found", keyword);
+        Search search = searchRepository.findByKeyword(keyword)
+                .orElseThrow(() -> new SearchNotFoundException(errorMessage));
         return search;
     }
 
-    public void addUrlToSearch(String id, String url) {
-        Optional<Search> optionalSearch = searchRepository.findById(id);
-        if (optionalSearch.isPresent()) {
-            Search search = optionalSearch.get();
-            search.getUrls().add(url);
-            searchRepository.save(search);
-        } else {
-            throw new IllegalArgumentException("Search with ID " + id + " not found.");
-        }
+    public void addUrlToSearch(String id, String url) throws SearchNotFoundException {
+        var errorMessage = String.format("Search with ID %s not found", id);
+        Search search = searchRepository.findById(id).orElseThrow(()-> {
+            return new SearchNotFoundException(errorMessage);
+        });
+
+        search.getUrls().add(url);
+        searchRepository.save(search);
+
     }
 }

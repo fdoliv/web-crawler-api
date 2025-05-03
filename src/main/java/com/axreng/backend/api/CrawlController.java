@@ -93,15 +93,15 @@ public class CrawlController {
 
                 LOGGER.info("The search keyword {} is valid.", crawlRequest.getKeyword());
                 
-                var search = new Search(crawlRequest.getKeyword());
-                search = searchService.saveSearch(search);
 
-                LOGGER.info("Search created with ID {}", search.getId());
-                LOGGER.info("Starting crawl for search with ID {}", search.getId());
-                crawlerService.startCrawl(search.getId());
+                String searchId = searchService.createSearch(crawlRequest.getKeyword());
+
+                LOGGER.info("Search created with ID {}", searchId);
+                LOGGER.info("Starting crawl for search with ID {}", searchId);
+                crawlerService.startCrawl(searchId);
 
                 res.status(HttpResponseCode.OK);
-                return ResponseHelper.createSuccessResponse(search.getId());
+                return ResponseHelper.createSuccessResponse(searchId);
             } catch (ValidationException ve) {
                 LOGGER.info("Keyword validation failed. {\"message\":\"{}\"}", ve.getMessage());
                 res.status(HttpResponseCode.BAD_REQUEST);

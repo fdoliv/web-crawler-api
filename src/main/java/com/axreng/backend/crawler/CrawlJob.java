@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.axreng.backend.exception.SearchNotFoundException;
 import com.axreng.backend.service.SearchService;
 import com.axreng.backend.util.StringUtils;
 
@@ -95,7 +96,7 @@ public class CrawlJob {
         );
     }
 
-    public void addUrlToResults(String url) {
+    public void addUrlToResults(String url) throws SearchNotFoundException {
         repoService.addUrlToSearch(getSearchId(), url);
     }
 }
