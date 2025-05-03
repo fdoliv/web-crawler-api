@@ -6,16 +6,8 @@ import java.net.URL;
 
 public class HttpClientHelper {
 
-    private HttpClientHelper() {}
+    public HttpClientHelper() {}
 
-    private static HttpClientHelper instance;
-
-    public static HttpClientHelper getInstance() {
-        if (instance == null) {
-            instance = new HttpClientHelper();
-        }
-        return instance;
-    }
     public HttpURLConnection createConnection(String url, String method, String body) throws Exception {
         URL endpoint = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) endpoint.openConnection();

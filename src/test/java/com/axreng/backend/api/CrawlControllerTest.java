@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.*;
 
 class CrawlControllerTest {
 
-    HttpClientHelper httpClientHelper = HttpClientHelper.getInstance();
+    HttpClientHelper httpClientHelper = new HttpClientHelper();
     HttpResponseReader httpResponseReader = new HttpResponseReader();
 
     private final String BASE_URL = "http://localhost:4567";
