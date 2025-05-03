@@ -23,18 +23,8 @@ public final class AppConfig {
             throw new IllegalStateException(message);
         }
         LOGGER.info("Base URL: {}", this.baseUrl);
-        String threadCountStr = System.getenv("THREAD_COUNT");
-        if (threadCountStr != null && !threadCountStr.isBlank()) {
-            try {
-                this.threadCount = Integer.parseInt(threadCountStr);
-            } catch (NumberFormatException e) {
-                var message = "THREAD_COUNT must be a valid integer";
-                LOGGER.error(message);
-                throw new IllegalStateException(message, e);
-            }
-        } else {
-            this.threadCount = Runtime.getRuntime().availableProcessors() + 1; 
-        }
+        this.threadCount = ConfigValidator.validateThreadCount(System.getenv("THREAD_COUNT"));
+
         LOGGER.trace("BASE_URL: {}\tTHREAD_COUNT: {}", this.baseUrl, this.threadCount);
     }
     

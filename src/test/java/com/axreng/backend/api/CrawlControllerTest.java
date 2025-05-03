@@ -15,6 +15,7 @@ import com.axreng.backend.service.ValidationService;
 import com.axreng.backend.util.HttpClientHelper;
 import com.axreng.backend.util.HttpMethods;
 import com.axreng.backend.util.HttpResponseCode;
+import com.axreng.backend.util.HttpResponseReader;
 
 import java.net.HttpURLConnection;
 
@@ -23,7 +24,9 @@ import static org.hamcrest.Matchers.*;
 
 class CrawlControllerTest {
 
-    HttpClientHelper helper = HttpClientHelper.getInstance();
+    HttpClientHelper httpClientHelper = HttpClientHelper.getInstance();
+    HttpResponseReader httpResponseReader = new HttpResponseReader();
+
     private final String BASE_URL = "http://localhost:4567";
     
 
@@ -57,10 +60,10 @@ class CrawlControllerTest {
 
         HttpURLConnection connection = null;
         try {
-            connection = helper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody);
+            connection = httpClientHelper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody);
             // When
             int responseCode = connection.getResponseCode();
-            String responseBody = helper.readResponse(connection);
+            String responseBody = httpResponseReader.readResponse(connection);
             String contentType = connection.getHeaderField("Content-Type");
 
             // Then
@@ -87,11 +90,11 @@ class CrawlControllerTest {
         HttpURLConnection connection = null;
 
         try{
-            connection = helper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody);
+            connection = httpClientHelper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody);
 
             // When
             int responseCode = connection.getResponseCode();
-            String responseBody = helper.readResponse(connection);
+            String responseBody = httpResponseReader.readResponse(connection);
             String contentType = connection.getHeaderField("Content-Type");
 
     
@@ -118,11 +121,11 @@ class CrawlControllerTest {
         String requestBody = "{ }";
         HttpURLConnection connection = null;
         try{
-            connection = helper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody);
+            connection = httpClientHelper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody);
 
             // When
             int responseCode = connection.getResponseCode();
-            String responseBody = helper.readResponse(connection);
+            String responseBody = httpResponseReader.readResponse(connection);
             String contentType = connection.getHeaderField("Content-Type");
 
             // Then
@@ -142,7 +145,7 @@ class CrawlControllerTest {
     void shouldReturnContentTypeAsApplicationJson() throws Exception {
         // Given
         String requestBody = "{ \"keyword\": \"validKeyword\" }";
-        HttpURLConnection connection = helper.createConnection("http://localhost:4567/crawl", "POST", requestBody);
+        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl", "POST", requestBody);
 
         // When
         connection.getResponseCode();
@@ -157,13 +160,13 @@ class CrawlControllerTest {
     void shouldReturn200ForValidId() throws Exception {
         // Given
         String requestBody = "{ \"keyword\": \"validKeyword\" }";
-        HttpURLConnection postConnection = helper.createConnection("http://localhost:4567/crawl", "POST", requestBody);
+        HttpURLConnection postConnection = httpClientHelper.createConnection("http://localhost:4567/crawl", "POST", requestBody);
         postConnection.getResponseCode();
-        String postResponseBody = helper.readResponse(postConnection);
+        String postResponseBody = httpResponseReader.readResponse(postConnection);
         String id = JsonHelper.extractFieldFromJson(postResponseBody, "id");
 
         // When
-        HttpURLConnection getConnection = helper.createConnection("http://localhost:4567/crawl/" + id, "GET", null);
+        HttpURLConnection getConnection = httpClientHelper.createConnection("http://localhost:4567/crawl/" + id, "GET", null);
         int responseCode = getConnection.getResponseCode();
         String contentType = getConnection.getHeaderField("Content-Type");
 
@@ -177,9 +180,9 @@ class CrawlControllerTest {
     @DisplayName("Should return 400 Bad Request for short ID")
     void shouldReturn400ForShortId() throws Exception {
         // When
-        HttpURLConnection connection = helper.createConnection("http://localhost:4567/crawl/1342", "GET", null);
+        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl/1342", "GET", null);
         int responseCode = connection.getResponseCode();
-        String responseBody = helper.readResponse(connection);
+        String responseBody = httpResponseReader.readResponse(connection);
         String contentType = connection.getHeaderField("Content-Type");
 
         // Then
@@ -192,9 +195,9 @@ class CrawlControllerTest {
     @DisplayName("Should return 400 Bad Request for long ID")
     void shouldReturn400ForLongId() throws Exception {
         // When
-        HttpURLConnection connection = helper.createConnection("http://localhost:4567/crawl/longidsended", "GET", null);
+        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl/longidsended", "GET", null);
         int responseCode = connection.getResponseCode();
-        String responseBody = helper.readResponse(connection);
+        String responseBody = httpResponseReader.readResponse(connection);
         String contentType = connection.getHeaderField("Content-Type");
 
         // Then
@@ -208,9 +211,9 @@ class CrawlControllerTest {
     void shouldReturn404ForNonExistentId() throws Exception {
         
         // When
-        HttpURLConnection connection = helper.createConnection("http://localhost:4567/crawl/1234abcd", "GET", null);
+        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl/1234abcd", "GET", null);
         int responseCode = connection.getResponseCode();
-        String responseBody = helper.readResponse(connection);
+        String responseBody = httpResponseReader.readResponse(connection);
         String contentType = connection.getHeaderField("Content-Type");
 
         // Then
@@ -223,9 +226,9 @@ class CrawlControllerTest {
     @DisplayName("Should return 400 Bad Request for ID with non-alphanumeric characters")
     void shouldReturn400ForNonAlphanumericId() throws Exception {
         // When
-        HttpURLConnection connection = helper.createConnection("http://localhost:4567/crawl/123$abcd", "GET", null);
+        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl/123$abcd", "GET", null);
         int responseCode = connection.getResponseCode();
-        String responseBody = helper.readResponse(connection);
+        String responseBody = httpResponseReader.readResponse(connection);
         String contentType = connection.getHeaderField("Content-Type");
 
         // Then
