@@ -4,15 +4,15 @@ import java.util.List;
 
 import com.google.gson.Gson;
 
-public class CrawlStatusResponse {
+public class CrawlerStatusResponse {
     private String id;
     private String status;
     private List<String> urls;
 
-    public CrawlStatusResponse() {
+    public CrawlerStatusResponse() {
     }
 
-    public CrawlStatusResponse(String id, String status, List<String> urls) {
+    public CrawlerStatusResponse(String id, String status, List<String> urls) {
         this.id = id;
         this.status = status;
         this.urls = urls;
@@ -33,5 +33,17 @@ public class CrawlStatusResponse {
 
     public String toJson() {
         return new Gson().toJson(this);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public List<String> getUrls() {
+        return urls;
     }
 }

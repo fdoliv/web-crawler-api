@@ -1,6 +1,6 @@
 package com.axreng.backend.api;
 
-public class CrawlRequest {
+public class CrawlerRequest {
 
     private String keyword;
     

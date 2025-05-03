@@ -2,13 +2,13 @@ package com.axreng.backend.api;
 
 import com.google.gson.Gson;
 
-public class CrawlResponse {
+public class CrawlerSucessResponse {
     private String id;
 
-    public CrawlResponse() {
+    public CrawlerSucessResponse() {
     }
 
-    public CrawlResponse(String id) {
+    public CrawlerSucessResponse(String id) {
         this.id = id;
     }
 
