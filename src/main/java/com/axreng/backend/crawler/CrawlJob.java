@@ -26,6 +26,7 @@ public class CrawlJob {
     private final Set<String> visitedUrls;
     private final AtomicInteger pendingUrlsCounter;
     private final AtomicInteger visitedUrlsCounter;
+    private final AtomicInteger processingUrlsCounter;
     private final Lock lock;
 
     /**
@@ -46,7 +47,9 @@ public class CrawlJob {
         this.pendingUrls.add(baseUrl);
         this.pendingUrlsCounter = new AtomicInteger(1);
         this.visitedUrlsCounter = new AtomicInteger(0);
+        processingUrlsCounter = new AtomicInteger(0);
         this.lock = new ReentrantLock();
+
     }
 
     /**
@@ -56,6 +59,7 @@ public class CrawlJob {
      */
     public String getNextUrl() {
         pendingUrlsCounter.decrementAndGet();
+        processingUrlsCounter.incrementAndGet();
         return pendingUrls.poll();
     }
 
@@ -89,7 +93,7 @@ public class CrawlJob {
      * @return true if the job is complete, false otherwise
      */
     public boolean isComplete() {
-        return pendingUrlsCounter.get() == 0 && pendingUrls.size() == 0;
+        return pendingUrlsCounter.get() == 0 && processingUrlsCounter.get() == 0;
     }
 
     /**
@@ -183,6 +187,10 @@ public class CrawlJob {
         return visitedUrlsCounter.get();
     }
 
+    public int getProcessingUrlsCount() {
+        return processingUrlsCounter.get();
+    }
+
     /**
      * Marks a URL as processed by adding it to the visited set and incrementing the counter.
      *
@@ -191,6 +199,7 @@ public class CrawlJob {
     public void markUrlAsProcessed(String url) {
         visitedUrls.add(url);
         visitedUrlsCounter.incrementAndGet();
+        processingUrlsCounter.decrementAndGet();
     }
 
     /**

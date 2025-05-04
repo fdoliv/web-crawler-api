@@ -2,6 +2,7 @@ package com.axreng.backend.util;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -50,21 +51,24 @@ public class HttpClientHelper {
             String body, 
             int connectionTimeout, 
             int readTimeout) throws Exception {
-        
-        URL endpoint = new URL(url);
-        HttpURLConnection httpConnection = (HttpURLConnection) endpoint.openConnection();
-        httpConnection.setRequestMethod(method);
-        httpConnection.setConnectTimeout(connectionTimeout);
-        httpConnection.setReadTimeout(readTimeout);
-        if (body != null && !body.isBlank()) {
-            httpConnection.setDoOutput(true);
-            try (OutputStream os = httpConnection.getOutputStream()) {
-                os.write(body.getBytes());
-                os.flush();
+        try {
+            URL endpoint = new URL(url);
+            HttpURLConnection httpConnection = (HttpURLConnection) endpoint.openConnection();
+            httpConnection.setRequestMethod(method);
+            httpConnection.setConnectTimeout(connectionTimeout);
+            httpConnection.setReadTimeout(readTimeout);
+            if (body != null && !body.isBlank()) {
+                httpConnection.setDoOutput(true);
+                try (OutputStream os = httpConnection.getOutputStream()) {
+                    os.write(body.getBytes());
+                    os.flush();
+                }
             }
+            return httpConnection;
+        } catch (ConnectException e) {
+            logger.error("Connection refused while connecting to URL: {}", url, e);
+            throw e; // Propagate the exception for retry handling
         }
-
-        return httpConnection;
     }
 
     /**
@@ -83,5 +87,4 @@ public class HttpClientHelper {
             throw new FailedFetchContentException(errorMessage);
         }
     }
-
 }

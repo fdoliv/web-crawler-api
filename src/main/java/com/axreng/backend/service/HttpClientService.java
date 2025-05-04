@@ -4,6 +4,7 @@ import java.net.HttpURLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.axreng.backend.exception.FailedFetchContentException;
 import com.axreng.backend.util.HttpClientHelper;
 import com.axreng.backend.util.HttpResponseReader;
 
@@ -44,15 +45,18 @@ public class HttpClientService {
      *
      * @param url the URL to fetch content from
      * @return the content retrieved from the URL as a String
-     * @throws Exception if an error occurs during the HTTP request or response processing
+     * @throws FailedFetchContentException if the content could not be fetched
      */
-    public String fetchContent(String url) throws Exception {
+    public String fetchContent(String url) throws FailedFetchContentException {
         LOGGER.debug("Fetching content from URL: {}", url);
         HttpURLConnection httpConnection = null;
         try {
             httpConnection = httpClientHelper.createConnection(url, "GET", null, 5000, 5000);
             httpClientHelper.validateSucessResponse(httpConnection);
             return httpResponseReader.readResponse(httpConnection);
+        } catch (Exception e){
+            throw new FailedFetchContentException(
+                String.format("Failed to fetch content from URL: %s", url), e);
         } finally {
             if (httpConnection != null) {
                 httpConnection.disconnect();

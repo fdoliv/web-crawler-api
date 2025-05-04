@@ -26,18 +26,29 @@ public class Main {
      * @param args command-line arguments (not used)
      */
     public static void main(String[] args) {
-        AppConfig appConfig = new AppConfig();
-        LOGGER.info("Starting application...");
-        
-        SearchService searchService = new SearchService();
-        ValidationService validationService = new ValidationService();
-        KeywordSearchService keywordSearchService = new KeywordSearchService();
-        LinkExtractorService linkExtractorService = new LinkExtractorService();
-        HttpClientService httpClientService = new HttpClientService();
-        
-        CrawlerService crawlerService = new CrawlerService(searchService, keywordSearchService, linkExtractorService, httpClientService, appConfig);
+        try{
+            AppConfig appConfig = new AppConfig();
+            LOGGER.info("Starting application...");
+            
+            SearchService searchService = new SearchService();
+            ValidationService validationService = new ValidationService();
+            KeywordSearchService keywordSearchService = new KeywordSearchService();
+            LinkExtractorService linkExtractorService = new LinkExtractorService();
+            HttpClientService httpClientService = new HttpClientService();
+            
+            CrawlerService crawlerService = new CrawlerService(searchService, keywordSearchService, linkExtractorService, httpClientService, appConfig);
+    
+            CrawlController crawlController = new CrawlController(searchService, crawlerService, validationService);
+            crawlController.initializeRoutes();
 
-        CrawlController crawlController = new CrawlController(searchService, crawlerService, validationService);
-        crawlController.initializeRoutes();
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                LOGGER.info("Shutting down application...");
+                spark.Spark.stop();
+                crawlerService.shutdown();
+            }));
+        } catch(IllegalArgumentException iae){
+            LOGGER.error("Error to start application: {}", iae.getMessage());
+        }
+        
     }
 }

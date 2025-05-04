@@ -5,6 +5,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +33,12 @@ public class ThreadMonitorService {
     /**
      * The interval (in seconds) at which monitoring logs are generated.
      */
-    private final int MONITORING_INTERVAL = 1; // in seconds
+    private final int MONITORING_INTERVAL = 30; // in seconds
+
+    /**
+     * The ScheduledExecutorService for monitoring.
+     */
+    private ScheduledExecutorService monitor;
 
     /**
      * Constructs a ThreadMonitorService with the specified thread pool executor and active jobs map.
@@ -49,19 +56,45 @@ public class ThreadMonitorService {
      * Logs the status of the thread pool and details of active jobs at regular intervals.
      */
     public void monitorThreads() {
-        ScheduledExecutorService monitor = Executors.newScheduledThreadPool(1);
+        monitor = Executors.newScheduledThreadPool(1);
         monitor.scheduleAtFixedRate(() -> {
-            LOGGER.debug("Crawler Executor Status - Active threads: {}, Queue size: {}, Active jobs: {}", 
+            LOGGER.info("Crawler Executor Status - Active threads: {}, Queue size: {}, Active jobs: {}", 
                     executor.getActiveCount(), 
                     executor.getQueue().size(), 
                     activeJobs.size());
-            for (CrawlJob job : activeJobs.values()) {
-                LOGGER.debug("Job ID: {}, Pending URLs: {}, Processed URLs: {}, Complete: {}", 
+
+            // Log detailed job metrics
+            activeJobs.values().stream()
+                .filter(job -> !job.isComplete()) // Only log jobs that are still processing
+                .forEach(job -> LOGGER.info("Job ID: {}, Pending URLs: {}, Processing URLs: {}, Processed URLs: {}, Complete: {}", 
                         job.getSearchId(), 
-                        job.getPendingUrls().size(), 
+                        job.getPendingUrlsCount(),
+                        job.getProcessingUrlsCount(), 
                         job.getProcessedUrlsCount(), 
-                        job.isComplete());
+                        job.isComplete()));
+
+            // Dynamically adjust thread pool size based on system load
+            OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+            double systemLoad = osBean.getSystemLoadAverage();
+            int optimalPoolSize = Math.max(1, (int) (Runtime.getRuntime().availableProcessors() * 0.9));
+            if (systemLoad < 0.7 && executor.getCorePoolSize() < optimalPoolSize) {
+                executor.setCorePoolSize(optimalPoolSize);
+                LOGGER.info("Increased thread pool size to {}", optimalPoolSize);
+            } else if (systemLoad > 0.9 && executor.getCorePoolSize() > 1) {
+                executor.setCorePoolSize(executor.getCorePoolSize() - 1);
+                LOGGER.info("Decreased thread pool size to {}", executor.getCorePoolSize());
             }
         }, 1, MONITORING_INTERVAL, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Shuts down the ThreadMonitorService.
+     * Ensures that the ScheduledExecutorService is properly terminated.
+     */
+    public void shutdown() {
+        LOGGER.info("Shutting down ThreadMonitorService...");
+        if (monitor != null) {
+            monitor.shutdown();
+        }
     }
 }
