@@ -16,6 +16,10 @@ import com.axreng.backend.exception.SearchNotFoundException;
 import com.axreng.backend.model.Search;
 import com.axreng.backend.util.AppConfig;
 
+/**
+ * Service responsible for managing and executing crawl jobs.
+ * Handles job scheduling, URL processing, and thread management.
+ */
 public class CrawlerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlerService.class);
     private final SearchService repositoryService;
@@ -28,7 +32,15 @@ public class CrawlerService {
     private final ThreadMonitorService threadMonitorService;
     private final ReentrantLock schedulingLock = new ReentrantLock();
 
-    
+    /**
+     * Constructs a CrawlerService with the specified dependencies.
+     *
+     * @param repositoryService the service for managing search data
+     * @param keywordSearchService the service for searching keywords in content
+     * @param linkExtractorService the service for extracting links from content
+     * @param httpClientService the service for making HTTP requests
+     * @param appConfig the application configuration
+     */
     public CrawlerService(SearchService repositoryService, 
             KeywordSearchService keywordSearchService, 
             LinkExtractorService linkExtractorService, 
@@ -41,27 +53,37 @@ public class CrawlerService {
         this.httpClientService = httpClientService;
         this.activeJobs = new ConcurrentHashMap<>();
         this.threadMonitorService = new ThreadMonitorService(executor, activeJobs);
-
     }
-    
+
+    /**
+     * Starts a new crawl job for the specified search ID.
+     *
+     * @param searchId the ID of the search to start crawling for
+     * @return the search ID
+     * @throws SearchNotFoundException if the search ID is not found
+     */
     public String startCrawl(String searchId) throws SearchNotFoundException {
-        
         LOGGER.info("Starting crawl for search ID: {}", searchId);
         Search search = repositoryService.findSearchById(searchId);
 
         LOGGER.info("Creating a job for search ID: {}", searchId);
         CrawlJob job = new CrawlJob(searchId, search.getKeyword(), appConfig.getBaseUrl(), repositoryService);
         activeJobs.put(searchId, job);
-        
+
         executor.submit(new JobWorker(job));
         LOGGER.info("Crawl job for search ID {} started.", searchId);
         threadMonitorService.monitorThreads();
-        
+
         return searchId;
     }
-        
-    private void processUrl(CrawlJob job, String url) {
 
+    /**
+     * Processes a single URL for the given crawl job.
+     *
+     * @param job the crawl job
+     * @param url the URL to process
+     */
+    private void processUrl(CrawlJob job, String url) {
         LOGGER.debug("Processing URL: {}", url);
         try {
             String content = httpClientService.fetchContent(url);
@@ -72,15 +94,21 @@ public class CrawlerService {
             job.addNewUrls(links);
         } catch (Exception e) {
             LOGGER.error("Error processing URL: {}", url, e);
-        }
-        finally{
+        } finally {
             job.getLock().lock();
-            job.markUrlAsProcessed(url);
-            job.getLock().unlock();
+            try {
+                job.markUrlAsProcessed(url);
+            } finally {
+                job.getLock().unlock();
+            }
         }
- 
     }
-    
+
+    /**
+     * Finishes a crawl job by updating its status and removing it from active jobs.
+     *
+     * @param searchId the ID of the search to finish
+     */
     private void finishJob(String searchId) {
         schedulingLock.lock();
         try {
@@ -88,7 +116,6 @@ public class CrawlerService {
             if (job != null) {
                 try {
                     repositoryService.updateSearchStatus(searchId);
-                    // metrics.activeJobs.dec();
                     LOGGER.info("Completed job for search ID: {}", searchId);
                 } catch (SearchNotFoundException e) {
                     LOGGER.error("Search not found during cleanup: {}", searchId, e);
@@ -99,24 +126,20 @@ public class CrawlerService {
         }
     }
 
-    public synchronized void shutdown() {
-        if (!executor.isShutdown()) {
-            LOGGER.info("Initiating graceful shutdown...");
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
+
+
+    /**
+     * Worker class responsible for executing a crawl job.
+     */
     private class JobWorker implements Runnable {
         private final CrawlJob job;
         private final ReentrantLock jobLock = new ReentrantLock();
 
+        /**
+         * Constructs a JobWorker for the specified crawl job.
+         *
+         * @param job the crawl job to execute
+         */
         public JobWorker(CrawlJob job) {
             this.job = job;
         }

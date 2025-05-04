@@ -12,21 +12,46 @@ import com.axreng.backend.api.CrawlerSucessResponse;
 import com.axreng.backend.model.Search;
 import com.google.gson.Gson;
 
+/**
+ * Utility class for creating JSON responses for the crawler API.
+ * Provides methods to generate error, success, and status responses.
+ */
 public class ResponseHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResponseHelper.class);
     private static final Gson GSON = new Gson();
-    
-    public static String createErrorResponse(int statusCode, String error,String message, String path) {
+
+    /**
+     * Creates a JSON-formatted error response.
+     *
+     * @param statusCode the HTTP status code
+     * @param error the error type or title
+     * @param message the error message
+     * @param path the API path where the error occurred
+     * @return a JSON string representing the error response
+     */
+    public static String createErrorResponse(int statusCode, String error, String message, String path) {
         CrawlerErrorResponse errorResponse = new CrawlerErrorResponse(statusCode, error, message, path);
         return GSON.toJson(errorResponse, CrawlerErrorResponse.class);
     }
 
+    /**
+     * Creates a JSON-formatted success response.
+     *
+     * @param crawlerRequestId the ID of the crawler request
+     * @return a JSON string representing the success response
+     */
     public static String createSuccessResponse(String crawlerRequestId) {
         CrawlerSucessResponse successResponse = new CrawlerSucessResponse(crawlerRequestId);
         return GSON.toJson(successResponse, CrawlerSucessResponse.class);
     }
 
+    /**
+     * Creates a JSON-formatted crawl status response.
+     *
+     * @param searchStatus the Search object containing the crawl status and URLs
+     * @return a JSON string representing the crawl status response
+     */
     public static String createCrawlStatusResponse(Search searchStatus) {
         LOGGER.trace("Creating CrawlerStatusResponse for Search ID: {}", searchStatus.getId());
         

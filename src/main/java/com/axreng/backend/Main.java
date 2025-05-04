@@ -12,12 +12,20 @@ import com.axreng.backend.service.SearchService;
 import com.axreng.backend.service.ValidationService;
 import com.axreng.backend.util.AppConfig;
 
-
+/**
+ * Entry point for the application.
+ * Initializes services, controllers, and routes to start the crawler application.
+ */
 public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
+    /**
+     * Main method to start the application.
+     * Initializes configuration, services, and controllers, and sets up routes.
+     *
+     * @param args command-line arguments (not used)
+     */
     public static void main(String[] args) {
-        // Inicializar a aplicação
         AppConfig appConfig = new AppConfig();
         LOGGER.info("Starting application...");
         
