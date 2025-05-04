@@ -5,8 +5,9 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.axreng.backend.exception.SearchNotFoundException;
 import com.axreng.backend.service.SearchService;
@@ -17,44 +18,46 @@ public class CrawlJob {
     private final String keyword;
     private final String baseUrl;
     private final SearchService repoService;
-    private final Queue<String> pendingUrls = new ConcurrentLinkedQueue<>();
-    private final Set<String> visitedUrls = ConcurrentHashMap.newKeySet();
-    private final AtomicBoolean isComplete = new AtomicBoolean(false);
-    private final AtomicInteger activeTasks = new AtomicInteger(0);
-    private final AtomicInteger processedUrls = new AtomicInteger(0);
-    // private final AtomicInteger scheduledUrls = new AtomicInteger(0);
-
+    private final Queue<String> pendingUrls;
+    private final Set<String> visitedUrls ;
+    private final AtomicInteger pendingUrlsCounter;
+    private final AtomicInteger visitedUrlsCounter;
+    private final Lock lock;
+    
     public CrawlJob(String searchId, String keyword, String baseUrl, SearchService repoService) {
         this.searchId = searchId;
         this.keyword = keyword;
         this.baseUrl = baseUrl;
-        this.pendingUrls.add(baseUrl);
-        this.visitedUrls.add(baseUrl);
         this.repoService = repoService;
+        this.pendingUrls = new ConcurrentLinkedQueue<>();
+        this.visitedUrls = ConcurrentHashMap.newKeySet();
+        this.pendingUrls.add(baseUrl);
+        this.pendingUrlsCounter = new AtomicInteger(1);
+        visitedUrlsCounter = new AtomicInteger(0);
+        this.lock = new ReentrantLock();
     }
     
     public String getNextUrl() {
-        // scheduledUrls.decrementAndGet();
+        pendingUrlsCounter.decrementAndGet();
         return pendingUrls.poll();
     }
     
     public void addNewUrls(List<String> urls) {
+        urls.removeAll(visitedUrls);
         for (String url : urls) {
-            // add url only if not visited
-            if (!visitedUrls.contains(url)) {
-                visitedUrls.add(url);
+            if (!pendingUrls.contains(url)) {
                 pendingUrls.add(url);
+                pendingUrlsCounter.incrementAndGet();
             }
         }
-        // scheduledUrls.addAndGet(urls.size());
     }
     
     public boolean hasMoreUrls() {
-        return !pendingUrls.isEmpty();
+        return pendingUrlsCounter.get() > 0;
     }
     
     public boolean isComplete() {
-        return getPendingUrlsCount() == 0;
+        return pendingUrlsCounter.get() == 0 && pendingUrls.size() == 0;
     }
     
     public String getSearchId() {
@@ -81,20 +84,9 @@ public class CrawlJob {
         return pendingUrls;
     }
 
-    // public boolean hasActiveTasks() {
-    //     return activeTasks.get() > 0;
-    // }
-
-    // public void incrementActiveTasks() {
-    //     activeTasks.incrementAndGet();
-    // }
-
-    // public void decrementActiveTasks() {
-    //     activeTasks.decrementAndGet();
-    //     if (activeTasks.get() == 0 && isComplete()) {
-    //         isComplete.set(true);
-    //     }
-    // }
+    public Lock getLock() {
+        return lock;
+    }
 
     @Override
     public String toString() {
@@ -109,10 +101,15 @@ public class CrawlJob {
     }
 
     public int getPendingUrlsCount() {
-        return pendingUrls.size();
+        return pendingUrlsCounter.get();
     }
 
     public int getProcessedUrlsCount() {
-        return visitedUrls.size();
+        return visitedUrlsCounter.get();
+    }
+
+    public void markUrlAsProcessed(String url) {
+        visitedUrls.add(url);
+        visitedUrlsCounter.incrementAndGet();
     }
 }

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,7 @@ public class CrawlerService {
     private final LinkExtractorService linkExtractorService;
     private final HttpClientService httpClientService;
     private final ThreadMonitorService threadMonitorService;
+    private final ReentrantLock schedulingLock = new ReentrantLock();
 
     
     public CrawlerService(SearchService repositoryService, 
@@ -42,7 +45,7 @@ public class CrawlerService {
     }
     
     public String startCrawl(String searchId) throws SearchNotFoundException {
-        threadMonitorService.monitorThreads();
+        
         LOGGER.info("Starting crawl for search ID: {}", searchId);
         Search search = repositoryService.findSearchById(searchId);
 
@@ -50,37 +53,14 @@ public class CrawlerService {
         CrawlJob job = new CrawlJob(searchId, search.getKeyword(), appConfig.getBaseUrl(), repositoryService);
         activeJobs.put(searchId, job);
         
-        scheduleNextBatch();
+        executor.submit(new JobWorker(job));
+        LOGGER.info("Crawl job for search ID {} started.", searchId);
+        threadMonitorService.monitorThreads();
         
         return searchId;
     }
-    
-    private void scheduleNextBatch() {
-        LOGGER.info("Distribuing tasks to active jobs");
-        List<CrawlJob> jobs = new ArrayList<>(activeJobs.values());
-        int totalJobs = jobs.size();
-        LOGGER.debug( "Total active jobs: {}", totalJobs);     
-        if (totalJobs == 0) return;
         
-        // Calcular quantas tarefas cada job deve receber
-        int tasksPerJob = Math.max(1, appConfig.getMaxThreads() / totalJobs);
-        // tasksPerJob = 2;
-        LOGGER.debug("Total tasks per Job: {}", tasksPerJob);
-
-        for (CrawlJob job : jobs) {
-            LOGGER.debug("Job: {}", job);
-            for (int i = 0; i < tasksPerJob && job.hasMoreUrls(); i++) {
-                String nextUrl = job.getNextUrl();
-                LOGGER.debug("Next url {}", nextUrl);
-                executor.submit(() -> {
-                    processUrl(job, nextUrl);
-                    
-                });
-            }
-        }  
-    }
-    
-    private synchronized void processUrl(CrawlJob job, String url) {
+    private void processUrl(CrawlJob job, String url) {
 
         LOGGER.debug("Processing URL: {}", url);
         try {
@@ -93,29 +73,89 @@ public class CrawlerService {
         } catch (Exception e) {
             LOGGER.error("Error processing URL: {}", url, e);
         }
-        finally {
-            synchronized (job){
-                if (job.hasMoreUrls()) {
-                    scheduleNextBatch();
-                } else if (job.isComplete()) {
-                    finishJob(job.getSearchId());
-                }
-            }
+        finally{
+            job.getLock().lock();
+            job.markUrlAsProcessed(url);
+            job.getLock().unlock();
         }
-       
-
+ 
     }
     
     private void finishJob(String searchId) {
-        CrawlJob job = activeJobs.get(searchId);
-        if (job != null && !job.hasMoreUrls() && job.isComplete()) {
-            LOGGER.info("Crawl job for search ID {} is complete. Updating status to done.", searchId);
-            try {
-                repositoryService.updateSearchStatus(searchId);
-            } catch (SearchNotFoundException e) {
-                LOGGER.error("Error updating search status for ID {}: {}", searchId, e.getMessage());
+        schedulingLock.lock();
+        try {
+            CrawlJob job = activeJobs.remove(searchId);
+            if (job != null) {
+                try {
+                    repositoryService.updateSearchStatus(searchId);
+                    // metrics.activeJobs.dec();
+                    LOGGER.info("Completed job for search ID: {}", searchId);
+                } catch (SearchNotFoundException e) {
+                    LOGGER.error("Search not found during cleanup: {}", searchId, e);
+                }
             }
-            activeJobs.remove(searchId);
+        } finally {
+            schedulingLock.unlock();
+        }
+    }
+
+    public synchronized void shutdown() {
+        if (!executor.isShutdown()) {
+            LOGGER.info("Initiating graceful shutdown...");
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+    private class JobWorker implements Runnable {
+        private final CrawlJob job;
+        private final ReentrantLock jobLock = new ReentrantLock();
+
+        public JobWorker(CrawlJob job) {
+            this.job = job;
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (!job.isComplete() && !Thread.currentThread().isInterrupted()) {
+                    jobLock.lock();
+                    try {
+                        String url = job.getNextUrl();
+
+                        LOGGER.debug("Crawler Executor Status - Active threads: {}, Queue size: {}, Active jobs: {}", 
+                            executor.getActiveCount(), 
+                            executor.getQueue().size(), 
+                            activeJobs.size());
+                        for (CrawlJob job : activeJobs.values()) {
+                            LOGGER.debug("Job ID: {}, Pending URLs: {}, Processed URLs: {}, Complete: {}", 
+                                    job.getSearchId(), 
+                                    job.getPendingUrls().size(), 
+                                    job.getProcessedUrlsCount(), 
+                                    job.isComplete());
+                        }
+
+                        if (url != null) {
+                            processUrl(job, url);
+                        } else {
+                            LOGGER.debug("No more URLs to process for job ID: {}", job.getSearchId());
+                            break; 
+                        }
+                    } finally {
+                        jobLock.unlock();
+                        Thread.yield();
+                    }
+                }
+                LOGGER.info("Job ID {} is complete or interrupted.", job.getSearchId());
+            } finally {
+                finishJob(job.getSearchId());
+            }
         }
     }
 }

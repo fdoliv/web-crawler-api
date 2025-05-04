@@ -15,7 +15,7 @@ public class ThreadMonitorService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ThreadMonitorService.class);
     private final ThreadPoolExecutor executor;
     private final Map<String, CrawlJob> activeJobs;
-    private final int MONITORING_INTERVAL = 10; // in seconds
+    private final int MONITORING_INTERVAL = 1; // in seconds
 
     public ThreadMonitorService(ThreadPoolExecutor executor, Map<String, CrawlJob> activeJobs) {
         this.executor = executor;

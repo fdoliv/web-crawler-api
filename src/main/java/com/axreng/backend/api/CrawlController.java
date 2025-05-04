@@ -15,6 +15,15 @@ import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The CrawlController class is responsible for handling HTTP requests related to crawling operations.
+ * It provides endpoints to retrieve the status of a crawl by ID and to initiate a new crawl.
+ * 
+ * Dependencies:
+ * - SearchService: Handles search-related operations.
+ * - CrawlerService: Manages the crawling process.
+ * - ValidationService: Validates input data.
+ */
 public class CrawlController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlController.class);
@@ -30,8 +39,23 @@ public class CrawlController {
         this.validationService = validationService;
     }
     
+    /**
+     * Initializes the routes for the crawling API.
+     * 
+     * Endpoints:
+     * - GET /crawl/:id: Retrieves the status of a crawl by its ID.
+     * - POST /crawl: Initiates a new crawl with a specified keyword.
+     */
     public void initializeRoutes() {
 
+        /**
+         * GET /crawl/:id
+         * Retrieves the status of a crawl by its ID.
+         * 
+         * @param req The HTTP request object.
+         * @param res The HTTP response object.
+         * @return A JSON response containing the crawl status or an error message.
+         */
         get("/crawl/:id", (req, res) -> {
             res.type("application/json");
 
@@ -79,6 +103,14 @@ public class CrawlController {
             }
         });
   
+        /**
+         * POST /crawl
+         * Initiates a new crawl with a specified keyword.
+         * 
+         * @param req The HTTP request object.
+         * @param res The HTTP response object.
+         * @return A JSON response containing the search ID or an error message.
+         */
         post("/crawl", (req, res) ->{
 
             res.type("application/json");

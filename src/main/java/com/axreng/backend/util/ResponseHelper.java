@@ -34,7 +34,14 @@ public class ResponseHelper {
         crawlStatusResponse.setId(searchStatus.getId());
         crawlStatusResponse.setStatus(searchStatus.getStatus().getValue());
         
-        List<String> urls = new ArrayList<>(searchStatus.getUrls());
+        List<String> urls = new ArrayList<>();
+        if (searchStatus.getUrls() != null) {
+            try {
+                urls.addAll(searchStatus.getUrls());
+            } catch (Exception e) {
+                LOGGER.error("Error while copying URLs from searchStatus: {}", e.getMessage(), e);
+            }
+        }
         crawlStatusResponse.setUrls(urls);
         
         LOGGER.trace("CrawlerStatusResponse created with ID: {}, Status: {}, URLs: {}", 
