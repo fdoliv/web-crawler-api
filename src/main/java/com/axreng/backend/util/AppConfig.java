@@ -14,7 +14,7 @@ public final class AppConfig {
     public AppConfig() {
         LOGGER.info("Initializing application configuration...");
 
-        this.baseUrl = "http://127.0.0.1:8080/"; // TODO: change to this = System.getenv("BASE_URL");
+        this.baseUrl = System.getenv("BASE_URL");
         
         if (this.baseUrl == null || this.baseUrl.isBlank()) {
             var message = "BASE_URL is not defined in the environment variables";
