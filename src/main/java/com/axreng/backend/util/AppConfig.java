@@ -35,10 +35,4 @@ public final class AppConfig {
     public int getMaxThreads() {
         return maxThreads;
     }
-
-
-    public long getTaskTimeout() {
-        return 60000L; 
-    }
-
 }
