@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  * - BASE_URL: The base URL for the application (required).
  * - THREAD_COUNT: The maximum number of threads allowed (optional, validated).
  */
-public final class ApplicationConfiguration {
+public class ApplicationConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationConfiguration.class);
 

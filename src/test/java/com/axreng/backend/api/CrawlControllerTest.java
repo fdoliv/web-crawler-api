@@ -22,6 +22,7 @@ import java.net.HttpURLConnection;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.*;
 
 class CrawlControllerTest {
 
@@ -35,7 +36,11 @@ class CrawlControllerTest {
 
     @BeforeAll
     static void setUp() {
-        ApplicationConfiguration appConfig = new ApplicationConfiguration();
+        ApplicationConfiguration appConfig = mock(ApplicationConfiguration.class);
+        when(appConfig.getBaseUrl()).thenReturn("http://localhost:8080");
+        when(appConfig.getMaxThreads()).thenReturn(10);
+        when(appConfig.getMinThreads()).thenReturn(2);
+
         SearchService searchService = new SearchService();
         ValidationService validationService = new ValidationService();
         KeywordSearchService keywordSearchService = new KeywordSearchService();
@@ -72,8 +77,8 @@ class CrawlControllerTest {
 
             // Then
             assertThat("Response code should indicate OK code", responseCode, is(expectedHttpResponseCode));
-            assertThat("Response body shoud indicate the id", responseBody, containsString(expectedResponseBody));
-            assertThat("Content-type shoud be application/json", contentType, is(expectedContentType));
+            assertThat("Response body should indicate the id", responseBody, containsString(expectedResponseBody));
+            assertThat("Content-type should be application/json", contentType, is(expectedContentType));
             
         } finally {
             if (connection != null) {
@@ -105,7 +110,7 @@ class CrawlControllerTest {
             // Then
             assertThat("Response code should indicate BAD_REQUEST code", responseCode, is(expectedHttpResponseCode));
             assertThat("Response message should indicate that keyword is too short", responseBody, containsString(expectedResponseBody));
-            assertThat("Content-type shoud be application/json", contentType, is(expectedContentType));
+            assertThat("Content-type should be application/json", contentType, is(expectedContentType));
 
         } finally {
             if (connection != null) {
@@ -135,7 +140,7 @@ class CrawlControllerTest {
             // Then
             assertThat("Response code should indicate BAD_REQUEST code", responseCode, is(expectedHttpResponseCode));
             assertThat("Response message should indicate that keyword is invalid", responseBody, containsString(expectedResponseBody));
-            assertThat("Content-type shoud be application/json", contentType, is(expectedContentType));
+            assertThat("Content-type should be application/json", contentType, is(expectedContentType));
             
         } finally {
             if (connection != null) {
