@@ -14,7 +14,7 @@ import com.axreng.backend.exception.FailedFetchContentException;
 import com.axreng.backend.exception.HttpRequestFailedException;
 import com.axreng.backend.exception.SearchNotFoundException;
 import com.axreng.backend.model.Search;
-import com.axreng.backend.util.AppConfig;
+import com.axreng.backend.util.ApplicationConfiguration;
 
 /**
  * Service responsible for managing and executing crawl jobs.
@@ -25,7 +25,7 @@ public class CrawlerService {
     private final SearchService repositoryService;
     private final ThreadPoolExecutor executor;
     private final Map<String, CrawlJob> activeJobs;
-    private final AppConfig appConfig;
+    private final ApplicationConfiguration appConfig;
     private final KeywordSearchService keywordSearchService;
     private final LinkExtractorService linkExtractorService;
     private final HttpClientService httpClientService;
@@ -45,15 +45,15 @@ public class CrawlerService {
     public CrawlerService(SearchService repositoryService, 
             KeywordSearchService keywordSearchService, 
             LinkExtractorService linkExtractorService, 
-            HttpClientService httpClientService, AppConfig appConfig) {
+            HttpClientService httpClientService, ApplicationConfiguration appConfig) {
         this.repositoryService = repositoryService;
         this.appConfig = appConfig;
-        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(appConfig.getMaxThreads());
+        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(appConfig.getMinThreads());
         this.keywordSearchService = keywordSearchService;
         this.linkExtractorService = linkExtractorService;
         this.httpClientService = httpClientService;
         this.activeJobs = new ConcurrentHashMap<>();
-        this.threadMonitorService = new ThreadMonitorService(executor, activeJobs);
+        this.threadMonitorService = new ThreadMonitorService(executor, activeJobs, appConfig);
         this.schedulingLock = new ReentrantLock();
         this.htmlCacheService = new HtmlCacheService();
     }

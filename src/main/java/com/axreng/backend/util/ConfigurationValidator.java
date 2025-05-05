@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
  * - validateThreadCount: Validates and parses the thread count.
  * - validateBaseUrl: Validates the format of the base URL.
  */
-public class ConfigValidator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigValidator.class);
+public class ConfigurationValidator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationValidator.class);
     private static final String VALID_URL_REGEX = "https?://[\\w.-]+(:\\d+)?(/.*)?"; 
     
     public static int validateThreadCount(String threadCount) {

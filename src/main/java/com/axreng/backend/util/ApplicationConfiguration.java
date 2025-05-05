@@ -12,12 +12,13 @@ import org.slf4j.LoggerFactory;
  * - BASE_URL: The base URL for the application (required).
  * - THREAD_COUNT: The maximum number of threads allowed (optional, validated).
  */
-public final class AppConfig {
+public final class ApplicationConfiguration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationConfiguration.class);
 
     private final String baseUrl;
     private final int maxThreads;
+    private final int minThreads;
     
     /**
      * Constructs an AppConfig instance by loading and validating configuration values
@@ -26,15 +27,16 @@ public final class AppConfig {
      * 
      * @throws IllegalStateException if BASE_URL is not defined or invalid.
      */
-    public AppConfig() {
+    public ApplicationConfiguration() {
         LOGGER.info("Initializing application configuration...");
 
-        String rawBaseUrl = ConfigValidator.validateBaseUrl(System.getenv("BASE_URL"));
+        String rawBaseUrl = ConfigurationValidator.validateBaseUrl(System.getenv("BASE_URL"));
         this.baseUrl = rawBaseUrl.endsWith("/") ? rawBaseUrl.substring(0, rawBaseUrl.length() - 1) : rawBaseUrl;
         LOGGER.info("Base URL: {}", this.baseUrl);
 
-        this.maxThreads = ConfigValidator.validateThreadCount(System.getenv("THREAD_COUNT"));
+        this.maxThreads = ConfigurationValidator.validateThreadCount(System.getenv("THREAD_COUNT"));
         LOGGER.trace("BASE_URL: {}\tTHREAD_COUNT: {}", this.baseUrl, this.maxThreads);
+        this.minThreads = Math.max(1, this.maxThreads / 2); 
     }
     
     /**
@@ -53,5 +55,14 @@ public final class AppConfig {
      */
     public int getMaxThreads() {
         return maxThreads;
+    }
+
+    /**
+     * Retrieves the minimum number of threads allowed for the application.
+     * 
+     * @return The minimum thread count as an integer.
+     */
+    public int getMinThreads() {
+        return minThreads;
     }
 }

@@ -12,7 +12,7 @@ import com.axreng.backend.service.KeywordSearchService;
 import com.axreng.backend.service.LinkExtractorService;
 import com.axreng.backend.service.SearchService;
 import com.axreng.backend.service.ValidationService;
-import com.axreng.backend.util.AppConfig;
+import com.axreng.backend.util.ApplicationConfiguration;
 import com.axreng.backend.util.HttpClientHelper;
 import com.axreng.backend.util.HttpMethods;
 import com.axreng.backend.util.HttpResponseCode;
@@ -35,7 +35,7 @@ class CrawlControllerTest {
 
     @BeforeAll
     static void setUp() {
-        AppConfig appConfig = new AppConfig();
+        ApplicationConfiguration appConfig = new ApplicationConfiguration();
         SearchService searchService = new SearchService();
         ValidationService validationService = new ValidationService();
         KeywordSearchService keywordSearchService = new KeywordSearchService();

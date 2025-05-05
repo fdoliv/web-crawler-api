@@ -10,7 +10,7 @@ import com.axreng.backend.service.KeywordSearchService;
 import com.axreng.backend.service.LinkExtractorService;
 import com.axreng.backend.service.SearchService;
 import com.axreng.backend.service.ValidationService;
-import com.axreng.backend.util.AppConfig;
+import com.axreng.backend.util.ApplicationConfiguration;
 
 /**
  * Entry point for the application.
@@ -27,7 +27,7 @@ public class Main {
      */
     public static void main(String[] args) {
         try{
-            AppConfig appConfig = new AppConfig();
+            ApplicationConfiguration appConfig = new ApplicationConfiguration();
             LOGGER.info("Starting application...");
             
             SearchService searchService = new SearchService();

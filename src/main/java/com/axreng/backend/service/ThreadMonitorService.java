@@ -1,17 +1,16 @@
 package com.axreng.backend.service;
 
-import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
+import com.sun.management.OperatingSystemMXBean; 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.axreng.backend.crawler.CrawlJob;
+import com.axreng.backend.util.ApplicationConfiguration;
 
 /**
  * Service for monitoring the status of threads in the crawler's thread pool.
@@ -26,14 +25,29 @@ public class ThreadMonitorService {
     private final ThreadPoolExecutor executor;
 
     /**
-     * The map of active crawl jobs being monitored.
-     */
-    private final Map<String, CrawlJob> activeJobs;
-
-    /**
      * The interval (in seconds) at which monitoring logs are generated.
      */
     private final int MONITORING_INTERVAL = 30; // in seconds
+    
+    /**
+     * The maximum CPU usage threshold for increasing the thread pool size.
+     */
+    private final int MAX_CPU_THRESHOLD = 70; // in percentage
+    
+    /**
+     * The maximum CPU limit for decreasing the thread pool size.
+     */
+    private final int MAX_CPU_LIMIT = 90; // in percentage
+
+    /**
+     * The threshold for the number of jobs in the queue to trigger thread pool size adjustment.
+     */
+    private final int MAX_QUANTITY_JOBS_THRESHOLD = 30; 
+
+    /**
+     * The minimum number of jobs in the queue to trigger thread pool size adjustment.
+     */
+    private final int MIN_QUANTITY_JOBS_THRESHOLD = 10; 
 
     /**
      * The ScheduledExecutorService for monitoring.
@@ -41,14 +55,20 @@ public class ThreadMonitorService {
     private ScheduledExecutorService monitor;
 
     /**
-     * Constructs a ThreadMonitorService with the specified thread pool executor and active jobs map.
+     * The application configuration instance.
+     */
+    private final ApplicationConfiguration config;
+
+    /**
+     * Constructs a ThreadMonitorService with the specified thread pool executor, active jobs map, and application configuration.
      *
      * @param executor the thread pool executor to monitor
      * @param activeJobs the map of active crawl jobs
+     * @param config the application configuration
      */
-    public ThreadMonitorService(ThreadPoolExecutor executor, Map<String, CrawlJob> activeJobs) {
+    public ThreadMonitorService(ThreadPoolExecutor executor, ApplicationConfiguration config) {
         this.executor = executor;
-        this.activeJobs = activeJobs;
+        this.config = config;
     }
 
     /**
@@ -58,31 +78,26 @@ public class ThreadMonitorService {
     public void monitorThreads() {
         monitor = Executors.newScheduledThreadPool(1);
         monitor.scheduleAtFixedRate(() -> {
-            LOGGER.debug("Crawler Executor Status - Active threads: {}, Queue size: {}, Active jobs: {}", 
-                    executor.getActiveCount(), 
-                    executor.getQueue().size(), 
-                    activeJobs.size());
+            int pendingJobs = executor.getQueue().size();
+            int currentPoolSize = executor.getCorePoolSize();
+            int activeThreads = executor.getActiveCount();
 
-            // Log detailed job metrics
-            activeJobs.values().stream()
-                .filter(job -> !job.isComplete()) // Only log jobs that are still processing
-                .forEach(job -> LOGGER.debug("Job ID: {}, Pending URLs: {}, Processing URLs: {}, Processed URLs: {}, Complete: {}", 
-                        job.getSearchId(), 
-                        job.getPendingUrlsCount(),
-                        job.getProcessingUrlsCount(), 
-                        job.getProcessedUrlsCount(), 
-                        job.isComplete()));
+            LOGGER.debug("Crawler Executor Status - Active threads: {}, Queue size: {}",
+                    activeThreads, 
+                    pendingJobs);
 
-            // Dynamically adjust thread pool size based on system load
-            OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-            double systemLoad = osBean.getSystemLoadAverage();
-            int optimalPoolSize = Math.max(1, (int) (Runtime.getRuntime().availableProcessors() * 0.9));
-            if (systemLoad < 0.7 && executor.getCorePoolSize() < optimalPoolSize) {
-                executor.setCorePoolSize(optimalPoolSize);
-                LOGGER.info("Increased thread pool size to {}", optimalPoolSize);
-            } else if (systemLoad > 0.9 && executor.getCorePoolSize() > 1) {
-                executor.setCorePoolSize(executor.getCorePoolSize() - 1);
-                LOGGER.info("Decreased thread pool size to {}", executor.getCorePoolSize());
+            // Dynamically adjust thread pool size based on system load and job count
+            OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            double cpuUsage = osBean.getCpuLoad() * 100; 
+
+            if (cpuUsage < MAX_CPU_THRESHOLD && pendingJobs > MAX_QUANTITY_JOBS_THRESHOLD && currentPoolSize < config.getMaxThreads()) {
+                int newPoolSize = executor.getCorePoolSize() + 2;
+                executor.setCorePoolSize(newPoolSize);
+                LOGGER.info("Increased thread pool size to {} based on system load and job count", newPoolSize);
+            } else if ((cpuUsage > MAX_CPU_LIMIT || pendingJobs < MIN_QUANTITY_JOBS_THRESHOLD) && currentPoolSize > config.getMinThreads()) {
+                int newPoolSize = Math.max(1, executor.getCorePoolSize() - 1);
+                executor.setCorePoolSize(newPoolSize);
+                LOGGER.info("Decreased thread pool size to {} based on system load and job count", newPoolSize);
             }
         }, 1, MONITORING_INTERVAL, TimeUnit.SECONDS);
     }
