@@ -29,7 +29,8 @@ public final class AppConfig {
     public AppConfig() {
         LOGGER.info("Initializing application configuration...");
 
-        this.baseUrl = ConfigValidator.validateBaseUrl(System.getenv("BASE_URL"));
+        String rawBaseUrl = ConfigValidator.validateBaseUrl(System.getenv("BASE_URL"));
+        this.baseUrl = rawBaseUrl.endsWith("/") ? rawBaseUrl.substring(0, rawBaseUrl.length() - 1) : rawBaseUrl;
         LOGGER.info("Base URL: {}", this.baseUrl);
 
         this.maxThreads = ConfigValidator.validateThreadCount(System.getenv("THREAD_COUNT"));

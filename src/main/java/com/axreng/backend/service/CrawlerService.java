@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.axreng.backend.crawler.CrawlJob;
 import com.axreng.backend.exception.FailedFetchContentException;
+import com.axreng.backend.exception.HttpRequestFailedException;
 import com.axreng.backend.exception.SearchNotFoundException;
 import com.axreng.backend.model.Search;
 import com.axreng.backend.util.AppConfig;
@@ -88,8 +89,8 @@ public class CrawlerService {
     private void processUrl(CrawlJob job, String url) {
         LOGGER.debug("Processing URL: {}", url);
         int retryCount = 0;
-        final int maxRetries = 10;
-        final long retryInterval = 60000; // 1 minute in milliseconds
+        final int maxRetries = 3;
+        final long retryInterval = 30000; // 30 seconds in milliseconds
 
         while (retryCount < maxRetries) {
             if (Thread.currentThread().isInterrupted()) {
@@ -108,10 +109,16 @@ public class CrawlerService {
                 List<String> links = linkExtractorService.extractLinks(content, url, job.getBaseUrl());
                 job.addNewUrls(links);
                 job.markUrlAsProcessed(url);
-                return; // Exit the loop if successful
+                return; 
+            } catch(HttpRequestFailedException hrfe) {
+                LOGGER.error("HTTP request failed for URL: {}. Error: {}", url, hrfe.getMessage());
+                job.markUrlAsProcessed(url);
+                return; 
+
             } catch (FailedFetchContentException e) {
                 retryCount++;
-                LOGGER.warn("Connection issue for URL: {}. Retrying {}/{} in 1 minute...", url, retryCount, maxRetries);
+                LOGGER.warn("Job of search {} has a connection issue for URL: {}. Retrying {}/{} in {} seconds...", 
+                    job.getSearchId(), url, retryCount, maxRetries, retryInterval / 1000);
                 try {
                     Thread.sleep(retryInterval);
                 } catch (InterruptedException ie) {
@@ -126,7 +133,7 @@ public class CrawlerService {
         }
 
         if (retryCount >= maxRetries) {
-            LOGGER.error("Max retries reached for URL: {}. Marking job as done.", url);
+            LOGGER.error("Max retries reached for URL: {}. Marking task as done.", url);
             job.getLock().lock();
             try {
                 job.markUrlAsProcessed(url);

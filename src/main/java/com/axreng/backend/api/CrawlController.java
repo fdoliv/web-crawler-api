@@ -66,7 +66,7 @@ public class CrawlController {
                 LOGGER.info("The search ID {} is valid.", id);
                 res.status(HttpResponseCode.OK);
                 Search search = searchService.findSearchById(id);
-                LOGGER.info("Search with ID {} found. Status: {}", id, search.getStatus());
+                LOGGER.info("Search found. {\"id\":\"{}\", \"status\":\"{}\", \"numberUrlsFounded\":\"{}\"}", id, search.getStatus(), search.getUrls().size());
                 return ResponseHelper.createCrawlStatusResponse(search);
                 
             } catch (ValidationException ve){

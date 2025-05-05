@@ -58,7 +58,7 @@ public class ThreadMonitorService {
     public void monitorThreads() {
         monitor = Executors.newScheduledThreadPool(1);
         monitor.scheduleAtFixedRate(() -> {
-            LOGGER.info("Crawler Executor Status - Active threads: {}, Queue size: {}, Active jobs: {}", 
+            LOGGER.debug("Crawler Executor Status - Active threads: {}, Queue size: {}, Active jobs: {}", 
                     executor.getActiveCount(), 
                     executor.getQueue().size(), 
                     activeJobs.size());
@@ -66,7 +66,7 @@ public class ThreadMonitorService {
             // Log detailed job metrics
             activeJobs.values().stream()
                 .filter(job -> !job.isComplete()) // Only log jobs that are still processing
-                .forEach(job -> LOGGER.info("Job ID: {}, Pending URLs: {}, Processing URLs: {}, Processed URLs: {}, Complete: {}", 
+                .forEach(job -> LOGGER.debug("Job ID: {}, Pending URLs: {}, Processing URLs: {}, Processed URLs: {}, Complete: {}", 
                         job.getSearchId(), 
                         job.getPendingUrlsCount(),
                         job.getProcessingUrlsCount(), 

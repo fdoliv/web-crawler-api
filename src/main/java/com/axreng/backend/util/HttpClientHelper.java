@@ -9,7 +9,7 @@ import java.net.URL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.axreng.backend.exception.FailedFetchContentException;
+import com.axreng.backend.exception.HttpRequestFailedException;
 
 /**
  * Utility class for handling HTTP connections and validating responses.
@@ -50,7 +50,7 @@ public class HttpClientHelper {
             String method, 
             String body, 
             int connectionTimeout, 
-            int readTimeout) throws Exception {
+            int readTimeout) throws ConnectException, IOException {
         try {
             URL endpoint = new URL(url);
             HttpURLConnection httpConnection = (HttpURLConnection) endpoint.openConnection();
@@ -84,7 +84,7 @@ public class HttpClientHelper {
             String errorMessage = String.format("Failed to fetch content from URL: %s, Response Code: %d",
                     connection.getURL(), responseCode);
             logger.error(errorMessage);
-            throw new FailedFetchContentException(errorMessage);
+            throw new HttpRequestFailedException(errorMessage);
         }
     }
 }

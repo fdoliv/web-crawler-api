@@ -1,10 +1,13 @@
 package com.axreng.backend.service;
 
+import java.io.IOException;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.axreng.backend.exception.FailedFetchContentException;
+import com.axreng.backend.exception.HttpRequestFailedException;
 import com.axreng.backend.util.HttpClientHelper;
 import com.axreng.backend.util.HttpResponseReader;
 
@@ -45,19 +48,29 @@ public class HttpClientService {
      *
      * @param url the URL to fetch content from
      * @return the content retrieved from the URL as a String
-     * @throws FailedFetchContentException if the content could not be fetched
+     * @throws FailedFetchContentException if the content could not be fetched due to connection or I/O errors
+     * @throws HttpRequestFailedException if the HTTP request is not successful (response code is not 200)
      */
-    public String fetchContent(String url) throws FailedFetchContentException {
+    public String fetchContent(String url) throws FailedFetchContentException, HttpRequestFailedException {
         LOGGER.debug("Fetching content from URL: {}", url);
         HttpURLConnection httpConnection = null;
         try {
             httpConnection = httpClientHelper.createConnection(url, "GET", null, 5000, 5000);
             httpClientHelper.validateSucessResponse(httpConnection);
             return httpResponseReader.readResponse(httpConnection);
-        } catch (Exception e){
+        } catch (HttpRequestFailedException hrfe){
+            throw hrfe;
+        } catch (ConnectException ce){
+            LOGGER.error("Connection error occurred while fetching content from URL: {}", url, ce);
             throw new FailedFetchContentException(
-                String.format("Failed to fetch content from URL: %s", url), e);
-        } finally {
+                String.format("Connection error occurred while fetching content from URL: %s", url), ce);
+        }
+        catch (IOException ioe){
+            LOGGER.error("I/O error occurred while fetching content from URL: {}", url, ioe);
+            throw new FailedFetchContentException(
+                String.format("I/O error occurred while fetching content from URL: %s", url), ioe);
+        } 
+        finally {
             if (httpConnection != null) {
                 httpConnection.disconnect();
             }
