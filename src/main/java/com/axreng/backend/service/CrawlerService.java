@@ -53,7 +53,7 @@ public class CrawlerService {
         this.linkExtractorService = linkExtractorService;
         this.httpClientService = httpClientService;
         this.activeJobs = new ConcurrentHashMap<>();
-        this.threadMonitorService = new ThreadMonitorService(executor, activeJobs, appConfig);
+        this.threadMonitorService = new ThreadMonitorService(executor, appConfig);
         this.schedulingLock = new ReentrantLock();
         this.htmlCacheService = new HtmlCacheService();
     }
