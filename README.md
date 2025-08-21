@@ -1,81 +1,74 @@
 # Web Crawler API
 
-## Objective
+## Overview
 
-This project is a Java application designed to navigate a website, search for a user-provided term, and list the URLs where the term is found.
+Web Crawler API is a Java-based HTTP service that searches for a given term across multiple pages of a website. It returns a list of URLs where the term appears.
 
-## Features
+## How It Works
 
-### 1. API Interaction
+- The API crawls pages starting from a base URL (set via environment variable).
+- It follows links within the same domain.
+- For each page, it checks if the search term is present (case-insensitive, matches anywhere in the HTML).
+- URLs containing the term are collected and returned.
 
-User interaction is handled through an HTTP API available on port 4567. It supports the following operations:
+## API Endpoints
 
-#### a. Start a New Search (POST)
+### Start a Search
 
-* **Endpoint:** `/crawl`
-* **Method:** `POST`
-* **Description:** Initiates a new search for a given keyword.
-* **Request Body:**
-    ```json
-    {
-      "keyword": "security"
-    }
-    ```
-* **Success Response:**
-    * **Code:** 200 OK
-    * **Body:**
-        ```json
-        {
-          "id": "30vbllyb"
-        }
-        ```
+- **POST** `/crawl`
+- **Body:**  
+  ```json
+  { "keyword": "your_search_term" }
+  ```
+- **Response:**  
+  ```json
+  { "id": "search_id" }
+  ```
+- Starts a new search for the specified term (4-32 characters).
 
-#### b. Query Search Results (GET)
+### Get Search Results
 
-* **Endpoint:** `/crawl/{id}`
-* **Method:** `GET`
-* **Description:** Queries the results of a previously initiated search.
-* **Success Response:**
-    * **Code:** 200 OK
-    * **Body:**
-        ```json
-        {
-          "id": "30vbllyb",
-          "status": "active",
-          "urls": [
-            "[http://example.com/index2.html](http://example.com/index2.html)",
-            "[http://example.com/page1.html](http://example.com/page1.html)"
-          ]
-        }
-        ```
+- **GET** `/crawl/{id}`
+- **Response:**  
+  ```json
+  {
+    "id": "search_id",
+    "status": "active|done",
+    "urls": [
+      "http://example.com/page1.html",
+      "http://example.com/page2.html"
+    ]
+  }
+  ```
+- Returns URLs found so far for the search. Status is `active` (in progress) or `done` (completed).
 
-### 2. Search Term Constraints
+## Key Details
 
-* The search term must be between 4 and 32 characters long.
-* The search is case-insensitive and performed on the entire HTML content, including tags and comments.
+- **Base URL:** Set with the `BASE_URL` environment variable.
+- **Search Term:** 4-32 characters, case-insensitive.
+- **Crawling:** Follows internal links only.
+- **Concurrency:** Multiple searches can run at the same time.
+- **Persistence:** Results are kept in memory while the app runs.
 
-### 3. Search ID
+## Libraries Used
 
-* The search ID is an automatically generated 8-character alphanumeric code.
+This project uses the following main libraries:
 
-### 4. Base URL and Crawling
+- **Spark Java**: For building the HTTP API.
+- **Jsoup**: For parsing and navigating HTML content.
+- **Jackson**: For JSON serialization and deserialization.
+- **JUnit**: For unit testing.
 
-* The base URL for the website to be crawled is determined by an environment variable.
-* The application follows both absolute and relative links found in anchor elements, but only if they share the same base URL.
+## Usage
 
-### 5. Concurrency and Data Persistence
-
-* The application supports running multiple searches simultaneously.
-* Information about ongoing (`active`) and completed (`done`) searches is retained for the duration of the application's execution.
-
-### 6. Partial Results
-
-* While a search is in progress, the GET operation will return any partial results that have been found so far.
-
-### 7. Project Structure
-
-* The provided base project structure must be used.
-* The `Dockerfile` and `pom.xml` files cannot be modified. Any other provided files can be changed as needed.
+1. **Build Docker image:**
+   ```shell
+   docker build -t web-crawler-api .
+   ```
+2. **Run container:**
+   ```shell
+   docker run -e BASE_URL=http://example.com/ -p 4567:4567 --rm web-crawler-api
+   ```
 
 ## Getting Started
 
@@ -88,10 +81,7 @@ From the project's root directory, the following commands must be used to compil
 
 2.  **Run the Docker container:**
     ```shell
-    docker run -e BASE_URL=[http://example.com/](http://example.com/) -p 4567:4567 --rm web-crawler-api
+    docker run -e BASE_URL=http://example.com/  -p 4567:4567 --rm web-crawler-api
     ```
 
-## Code Distribution
 
-* The source code should be delivered in a `.tar` or `.tar.gz` archive.
-* If the code is made public, it is kindly requested that any project-specific references (including in package names and hosts) be removed from all files before publication.
