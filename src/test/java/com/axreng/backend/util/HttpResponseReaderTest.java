@@ -2,6 +2,8 @@ package com.axreng.backend.util;
 
 import org.junit.jupiter.api.Test;
 
+import com.fdoliv.backend.util.HttpResponseReader;
+
 import java.io.ByteArrayInputStream;
 import java.net.HttpURLConnection;
 

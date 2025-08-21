@@ -2,6 +2,8 @@ package com.axreng.backend.util;
 
 import org.junit.jupiter.api.Test;
 
+import com.fdoliv.backend.util.HttpClientHelper;
+
 import java.net.HttpURLConnection;
 
 import static org.hamcrest.MatcherAssert.assertThat;

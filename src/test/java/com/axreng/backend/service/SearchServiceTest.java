@@ -1,13 +1,15 @@
 package com.axreng.backend.service;
 
-import com.axreng.backend.exception.SearchAlreadyExistsExeption;
-import com.axreng.backend.exception.SearchNotFoundException;
-import com.axreng.backend.model.Search;
-import com.axreng.backend.model.Status;
-import com.axreng.backend.repository.SearchRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.fdoliv.backend.exception.SearchAlreadyExistsExeption;
+import com.fdoliv.backend.exception.SearchNotFoundException;
+import com.fdoliv.backend.model.Search;
+import com.fdoliv.backend.model.Status;
+import com.fdoliv.backend.repository.SearchRepository;
+import com.fdoliv.backend.service.SearchService;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;

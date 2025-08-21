@@ -9,8 +9,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 
-import com.axreng.backend.exception.KeywordValidatorException;
-import com.axreng.backend.exception.SearchIDValidatorException;
+import com.fdoliv.backend.exception.KeywordValidatorException;
+import com.fdoliv.backend.exception.SearchIDValidatorException;
+import com.fdoliv.backend.service.ValidationService;
 
 
 public class ValidatorServiceTest {

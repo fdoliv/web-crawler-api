@@ -1,8 +1,10 @@
 package com.axreng.backend.util;
 
-import com.axreng.backend.model.Search;
-import com.axreng.backend.model.Status;
 import org.junit.jupiter.api.Test;
+
+import com.fdoliv.backend.model.Search;
+import com.fdoliv.backend.model.Status;
+import com.fdoliv.backend.util.ResponseHelper;
 
 import java.util.Set;
 

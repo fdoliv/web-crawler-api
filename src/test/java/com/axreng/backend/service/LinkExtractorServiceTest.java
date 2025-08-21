@@ -2,6 +2,8 @@ package com.axreng.backend.service;
 
 import org.junit.jupiter.api.Test;
 
+import com.fdoliv.backend.service.LinkExtractorService;
+
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;

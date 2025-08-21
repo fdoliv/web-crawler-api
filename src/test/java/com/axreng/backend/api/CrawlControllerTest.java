@@ -6,17 +6,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.axreng.backend.helper.JsonHelper;
-import com.axreng.backend.service.CrawlerService;
-import com.axreng.backend.service.HttpClientService;
-import com.axreng.backend.service.KeywordSearchService;
-import com.axreng.backend.service.LinkExtractorService;
-import com.axreng.backend.service.SearchService;
-import com.axreng.backend.service.ValidationService;
-import com.axreng.backend.util.ApplicationConfiguration;
-import com.axreng.backend.util.HttpClientHelper;
-import com.axreng.backend.util.HttpMethods;
-import com.axreng.backend.util.HttpResponseCode;
-import com.axreng.backend.util.HttpResponseReader;
+import com.fdoliv.backend.api.CrawlController;
+import com.fdoliv.backend.service.CrawlerService;
+import com.fdoliv.backend.service.HttpClientService;
+import com.fdoliv.backend.service.KeywordSearchService;
+import com.fdoliv.backend.service.LinkExtractorService;
+import com.fdoliv.backend.service.SearchService;
+import com.fdoliv.backend.service.ValidationService;
+import com.fdoliv.backend.util.ApplicationConfiguration;
+import com.fdoliv.backend.util.HttpClientHelper;
+import com.fdoliv.backend.util.HttpMethods;
+import com.fdoliv.backend.util.HttpResponseCode;
+import com.fdoliv.backend.util.HttpResponseReader;
 
 import java.net.HttpURLConnection;
 

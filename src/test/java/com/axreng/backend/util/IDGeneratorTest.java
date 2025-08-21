@@ -2,6 +2,8 @@ package com.axreng.backend.util;
 
 import org.junit.jupiter.api.Test;
 
+import com.fdoliv.backend.util.IDGenerator;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
