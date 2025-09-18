@@ -5,7 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.dev.dias.exception.SearchAlreadyExistsExeption;
+import br.dev.dias.exception.SearchAlreadyExistsException;
 import br.dev.dias.exception.SearchNotFoundException;
 import br.dev.dias.model.Search;
 import br.dev.dias.model.Status;
@@ -44,16 +44,16 @@ public class SearchService {
      *
      * @param keyword the keyword for the search
      * @return the ID of the created search
-     * @throws SearchAlreadyExistsExeption if a search with the same keyword already exists
+     * @throws SearchAlreadyExistsException if a search with the same keyword already exists
      */
-    public String createSearch(String keyword) throws SearchAlreadyExistsExeption {
+    public String createSearch(String keyword) throws SearchAlreadyExistsException {
 
         try {
             LOGGER.debug("Checking if search with keyword '{}' already exists", keyword);
             findSearchByKeyword(keyword);
             var message = String.format("Search with keyword %s already exists.", keyword);
             LOGGER.warn(message);
-            throw new SearchAlreadyExistsExeption(message);
+            throw new SearchAlreadyExistsException(message);
         } catch (SearchNotFoundException snfe) {
             LOGGER.debug("Search with keyword '{}' does not exist. Proceeding to save.", keyword);
             String id = IDGenerator.generateUniqueId(searchRepository);

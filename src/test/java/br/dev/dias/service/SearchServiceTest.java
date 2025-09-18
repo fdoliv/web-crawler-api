@@ -4,7 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import br.dev.dias.exception.SearchAlreadyExistsExeption;
+import br.dev.dias.exception.SearchAlreadyExistsException;
 import br.dev.dias.exception.SearchNotFoundException;
 import br.dev.dias.model.Search;
 import br.dev.dias.model.Status;
@@ -43,7 +43,7 @@ class SearchServiceTest {
             assertThat("The status should be ACTIVE", result.getStatus(), is(Status.ACTIVE));
         }catch (SearchNotFoundException e) {
             System.out.println("Search not found: " + e.getMessage());
-        } catch (SearchAlreadyExistsExeption e) {
+        } catch (SearchAlreadyExistsException e) {
             System.out.println("Search alredy exists: " + e.getMessage());
 
         }
@@ -68,7 +68,7 @@ class SearchServiceTest {
         } catch (SearchNotFoundException e) {
             System.out.println("Search not found: " + e.getMessage());
         }
-        catch (SearchAlreadyExistsExeption e) {
+        catch (SearchAlreadyExistsException e) {
             System.out.println("Search alredy exists: " + e.getMessage());
         }
     }
@@ -109,7 +109,7 @@ class SearchServiceTest {
         } catch (SearchNotFoundException e) {
             System.out.println("Search not found: " + e.getMessage());
         }
-        catch (SearchAlreadyExistsExeption e) {
+        catch (SearchAlreadyExistsException e) {
             System.out.println("Search alredy exists: " + e.getMessage());
         }
     }

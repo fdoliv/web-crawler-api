@@ -4,7 +4,7 @@ import static spark.Spark.*;
 
 import com.google.gson.Gson;
 
-import br.dev.dias.exception.SearchAlreadyExistsExeption;
+import br.dev.dias.exception.SearchAlreadyExistsException;
 import br.dev.dias.exception.SearchNotFoundException;
 import br.dev.dias.exception.ValidationException;
 import br.dev.dias.model.Search;
@@ -141,7 +141,7 @@ public class CrawlController {
                 res.status(HttpResponseCode.BAD_REQUEST);
                 return ResponseHelper.createErrorResponse(HttpResponseCode.BAD_REQUEST, "Bad Request", ve.getMessage(), req.pathInfo());
                 
-            } catch (SearchAlreadyExistsExeption safe){
+            } catch (SearchAlreadyExistsException safe){
                 
                 LOGGER.info("Retrieving existing search data for keyword: {}", crawlRequest.getKeyword());
                 Search search = searchService.findSearchByKeyword(crawlRequest.getKeyword());                
