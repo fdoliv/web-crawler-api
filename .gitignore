@@ -27,3 +27,5 @@ Dockerfile
 pom.xml
 
 target/test-classes/*.csv
+
+.vscode
