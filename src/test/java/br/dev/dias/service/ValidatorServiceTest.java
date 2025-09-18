@@ -14,7 +14,7 @@ import br.dev.dias.exception.SearchIDValidatorException;
 import br.dev.dias.service.ValidationService;
 
 
-public class ValidatorServiceTest {
+class ValidatorServiceTest {
 
 
     private static ValidationService validationService;

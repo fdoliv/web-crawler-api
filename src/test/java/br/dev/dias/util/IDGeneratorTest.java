@@ -7,7 +7,7 @@ import br.dev.dias.util.IDGenerator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-public class IDGeneratorTest {
+class IDGeneratorTest {
 
     private final int ID_LENGTH = 8;
     private final String ALPHANUMERIC_REGEX = "^[a-zA-Z0-9]+$";
