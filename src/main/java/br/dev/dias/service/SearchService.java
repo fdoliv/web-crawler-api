@@ -114,7 +114,7 @@ public class SearchService {
      * @throws SearchNotFoundException if no search with the specified keyword is found
      */
     public Search findSearchByKeyword(String keyword) throws SearchNotFoundException {
-        var errorMessage = String.format("Search with keyword {} not found", keyword);
+        var errorMessage = String.format("Search with keyword %s not found", keyword);
         Search search = searchRepository.findByKeyword(keyword)
                 .orElseThrow(() -> new SearchNotFoundException(errorMessage));
         return search;
