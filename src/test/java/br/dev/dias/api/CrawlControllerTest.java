@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import br.dev.dias.helper.JsonHelper;
-import br.dev.dias.api.CrawlController;
 import br.dev.dias.service.CrawlerService;
 import br.dev.dias.service.HttpClientService;
 import br.dev.dias.service.KeywordSearchService;
@@ -59,13 +58,11 @@ class CrawlControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 200 OK and id for valid keyword")
+    @DisplayName("Should return 200 OK for valid keyword")
     void shouldReturn200ForValidKeyword() throws Exception {
         // Given
         var BASE_PATH = "/crawl";
         var expectedHttpResponseCode = HttpResponseCode.OK;
-        var expectedContentType = "application/json";
-        var expectedResponseBody = "{\"id\":";
         var requestBody = "{ \"keyword\": \"validKeyword\" }";
 
         HttpURLConnection connection = null;
@@ -73,14 +70,58 @@ class CrawlControllerTest {
             connection = httpClientHelper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
             // When
             int responseCode = connection.getResponseCode();
+
+            // Then
+            assertThat(responseCode, is(expectedHttpResponseCode));
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return response body containing id for valid keyword")
+    void shouldReturnResponseBodyContainingIdForValidKeyword() throws Exception {
+        // Given
+        var BASE_PATH = "/crawl/";
+        var expectedResponseBody = "{\"id\":";
+        var requestBody = "{ \"keyword\": \"validKeyword\" }";
+        var url = BASE_URL+BASE_PATH;
+
+        HttpURLConnection connection = null;
+        try {
+            connection = httpClientHelper.createConnection(url, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            // When
+            connection.getResponseCode();
             String responseBody = httpResponseReader.readResponse(connection);
+
+            // Then
+            assertThat(responseBody, containsString(expectedResponseBody));
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return Content-Type as application/json for valid keyword")
+    void shouldReturnContentTypeAsApplicationJsonForValidKeyword() throws Exception {
+        // Given
+        var BASE_PATH = "/crawl/";
+        var expectedContentType = "application/json";
+        var requestBody = "{ \"keyword\": \"validKeyword\" }";
+        var url = BASE_URL+BASE_PATH;
+        HttpURLConnection connection = null;
+        try {
+            connection = httpClientHelper.createConnection(url, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            // When
+            connection.getResponseCode();
             String contentType = connection.getHeaderField("Content-Type");
 
             // Then
-            assertThat("Response code should indicate OK code", responseCode, is(expectedHttpResponseCode));
-            assertThat("Response body should indicate the id", responseBody, containsString(expectedResponseBody));
-            assertThat("Content-type should be application/json", contentType, is(expectedContentType));
-            
+            assertThat(contentType, is(expectedContentType));
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -90,29 +131,73 @@ class CrawlControllerTest {
 
     @Test
     @DisplayName("Should return 400 Bad Request for invalid keyword")
-    void shouldReturn400ForInvalidKeyword() throws Exception {
+    void shouldReturn400ForInvalidKeywordResponseCode() throws Exception {
         // Given
-        var BASE_PATH = "/crawl";
+        var BASE_PATH = "/crawl/";
         var expectedHttpResponseCode = HttpResponseCode.BAD_REQUEST;
-        var expectedContentType = "application/json";
-        var expectedResponseBody = "too short";
-        String requestBody = "{ \"keyword\": \"abc\" }"; 
+        var requestBody = "{ \"keyword\": \"abc\" }"; 
         HttpURLConnection connection = null;
-
-        try{
-            connection = httpClientHelper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+        var url = BASE_URL + BASE_PATH;
+        try {
+            connection = httpClientHelper.createConnection(url, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
 
             // When
             int responseCode = connection.getResponseCode();
+
+            // Then
+            assertThat(responseCode, is(expectedHttpResponseCode));
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return response message indicating keyword is too short")
+    void shouldReturnResponseMessageForInvalidKeyword() throws Exception {
+        // Given
+        var BASE_PATH = "/crawl/";
+        var expectedResponseBody = "too short";
+        var requestBody = "{ \"keyword\": \"abc\" }"; 
+        var url = BASE_URL + BASE_PATH;
+        HttpURLConnection connection = null;
+
+        try {
+            connection = httpClientHelper.createConnection(url, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+
+            // When
+            connection.getResponseCode();
             String responseBody = httpResponseReader.readResponse(connection);
+
+            // Then
+            assertThat(responseBody, containsString(expectedResponseBody));
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return Content-Type as application/json for invalid keyword")
+    void shouldReturnContentTypeForInvalidKeyword() throws Exception {
+        // Given
+        var BASE_PATH = "/crawl/";
+        var expectedContentType = "application/json";
+        var requestBody = "{ \"keyword\": \"abc\" }"; 
+        var url = BASE_URL + BASE_PATH;
+        HttpURLConnection connection = null;
+
+        try {
+            connection = httpClientHelper.createConnection(url, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+
+            // When
+            connection.getResponseCode();
             String contentType = connection.getHeaderField("Content-Type");
 
-    
             // Then
-            assertThat("Response code should indicate BAD_REQUEST code", responseCode, is(expectedHttpResponseCode));
-            assertThat("Response message should indicate that keyword is too short", responseBody, containsString(expectedResponseBody));
-            assertThat("Content-type should be application/json", contentType, is(expectedContentType));
-
+            assertThat(contentType, is(expectedContentType));
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -122,27 +207,74 @@ class CrawlControllerTest {
 
     @Test
     @DisplayName("Should return 400 Bad Request for missing keyword")
-    void shouldReturn400ForMissingKeyword() throws Exception {
+    void shouldReturn400ForMissingKeywordResponseCode() throws Exception {
         // Given
-        var BASE_PATH = "/crawl";
+        var BASE_PATH = "/crawl/";
         var expectedHttpResponseCode = HttpResponseCode.BAD_REQUEST;
-        var expectedContentType = "application/json";
-        var expectedResponseBody = "Invalid keyword";
-        String requestBody = "{ }";
+        var requestBody = "{ }";
+        var url = BASE_URL + BASE_PATH;
+
         HttpURLConnection connection = null;
-        try{
-            connection = httpClientHelper.createConnection(BASE_URL + BASE_PATH, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+        try {
+            connection = httpClientHelper.createConnection(url, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
 
             // When
             int responseCode = connection.getResponseCode();
+
+            // Then
+            assertThat(responseCode, is(expectedHttpResponseCode));
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return response message indicating invalid keyword for missing keyword")
+    void shouldReturnResponseMessageForMissingKeyword() throws Exception {
+        // Given
+        var BASE_PATH = "/crawl";
+        var expectedResponseBody = "Invalid keyword";
+        var requestBody = "{ }";
+        var url = BASE_URL + BASE_PATH;
+
+        HttpURLConnection connection = null;
+        try {
+            connection = httpClientHelper.createConnection(url, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+
+            // When
+            connection.getResponseCode();
             String responseBody = httpResponseReader.readResponse(connection);
+
+            // Then
+            assertThat(responseBody, containsString(expectedResponseBody));
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return Content-Type as application/json for missing keyword")
+    void shouldReturnContentTypeForMissingKeyword() throws Exception {
+        // Given
+        var BASE_PATH = "/crawl";
+        var expectedContentType = "application/json";
+        var requestBody = "{ }";
+        HttpURLConnection connection = null;
+        var url = BASE_URL + BASE_PATH;
+
+        try {
+            connection = httpClientHelper.createConnection(url, HttpMethods.POST, requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+
+            // When
+            connection.getResponseCode();
             String contentType = connection.getHeaderField("Content-Type");
 
             // Then
-            assertThat("Response code should indicate BAD_REQUEST code", responseCode, is(expectedHttpResponseCode));
-            assertThat("Response message should indicate that keyword is invalid", responseBody, containsString(expectedResponseBody));
-            assertThat("Content-type should be application/json", contentType, is(expectedContentType));
-            
+            assertThat(contentType, is(expectedContentType));
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -154,96 +286,389 @@ class CrawlControllerTest {
     @DisplayName("Should return Content-Type as application/json")
     void shouldReturnContentTypeAsApplicationJson() throws Exception {
         // Given
-        String requestBody = "{ \"keyword\": \"validKeyword\" }";
-        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl", "POST", requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+        var BASE_PATH = "/crawl/";
+        var requestBody = "{ \"keyword\": \"validKeyword\" }";
+        var expectedContentType = "application/json";
+        var url = BASE_URL + BASE_PATH;
+        HttpURLConnection connection = null;
+        try {
+            connection = httpClientHelper.createConnection(url, "POST", requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
 
-        // When
-        connection.getResponseCode();
-        String contentType = connection.getHeaderField("Content-Type");
+            // When
+            connection.getResponseCode();
+            String contentType = connection.getHeaderField("Content-Type");
 
-        // Then
-        assertThat("Content-type shoud be application/json", contentType, is("application/json"));
+            // Then
+            assertThat(contentType, is(expectedContentType));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     @Test
     @DisplayName("Should return 200 OK for valid ID")
     void shouldReturn200ForValidId() throws Exception {
         // Given
-        String requestBody = "{ \"keyword\": \"validKeyword\" }";
-        HttpURLConnection postConnection = httpClientHelper.createConnection("http://localhost:4567/crawl", "POST", requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
-        postConnection.getResponseCode();
-        String postResponseBody = httpResponseReader.readResponse(postConnection);
-        String id = JsonHelper.extractFieldFromJson(postResponseBody, "id");
+        var BASE_PATH = "/crawl/";
+        var requestBody = "{ \"keyword\": \"validKeyword\" }";
+        var url = BASE_URL + BASE_PATH;
+        var expectedHttpResponseCode = HttpResponseCode.OK;
+        HttpURLConnection postConnection = null;
+        HttpURLConnection getConnection  = null;
+        
+        try {
+            postConnection = httpClientHelper.createConnection(url, "POST", requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            postConnection.getResponseCode();
+            String postResponseBody = httpResponseReader.readResponse(postConnection);
+            String id = JsonHelper.extractFieldFromJson(postResponseBody, "id");
 
-        // When
-        HttpURLConnection getConnection = httpClientHelper.createConnection("http://localhost:4567/crawl/" + id, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
-        int responseCode = getConnection.getResponseCode();
-        String contentType = getConnection.getHeaderField("Content-Type");
+            // When
+            url = url + id;
+            getConnection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            int responseCode = getConnection.getResponseCode();
 
+            // Then
+            assertThat(responseCode, is(expectedHttpResponseCode));
+        }
+        finally{
+            if (postConnection != null) {
+                postConnection.disconnect();
+            }
+            if (getConnection != null) {
+                getConnection.disconnect();
+            }
 
-        // Then
-        assertThat("Response code should indicate OK code", responseCode, is(HttpResponseCode.OK));
-        assertThat("Content-type shoud be application/json", contentType, is("application/json"));
+        }
+    }
+
+    @Test
+    @DisplayName("Should return Content-Type as application/json for valid ID")
+    void shouldReturnContentTypeAsApplicationJsonForValidId() throws Exception {
+        // Given
+        var BASE_PATH = "/crawl/";
+        var requestBody = "{ \"keyword\": \"validKeyword\" }";
+        var expectedContentType = "application/json";
+        var url = BASE_URL + BASE_PATH;
+
+        HttpURLConnection postConnection = null;
+        HttpURLConnection getConnection  = null;
+        try{
+            postConnection = httpClientHelper.createConnection(url, "POST", requestBody, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            postConnection.getResponseCode();
+            String postResponseBody = httpResponseReader.readResponse(postConnection);
+            String id = JsonHelper.extractFieldFromJson(postResponseBody, "id");
+
+            // When
+            url = url+id;
+            getConnection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            String contentType = getConnection.getHeaderField("Content-Type");
+
+            // Then
+            assertThat(contentType, is(expectedContentType));
+        }finally{
+            if (postConnection != null) {
+                postConnection.disconnect();
+            }
+            if (getConnection != null) {
+                getConnection.disconnect();
+            }
+        }
     }
 
     @Test
     @DisplayName("Should return 400 Bad Request for short ID")
-    void shouldReturn400ForShortId() throws Exception {
-        // When
-        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl/1342", "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
-        int responseCode = connection.getResponseCode();
-        String responseBody = httpResponseReader.readResponse(connection);
-        String contentType = connection.getHeaderField("Content-Type");
+    void shouldReturn400ForShortIdResponseCode() throws Exception {
 
-        // Then
-        assertThat("Response code should indicate BAD_REQUEST code", responseCode, is(HttpResponseCode.BAD_REQUEST));
-        assertThat("Response message should indicate that id is too short", responseBody, containsString("too short"));
-        assertThat("Content-type shoud be application/json", contentType, is("application/json"));
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "1342";
+        var expectedHttpResponseCode = HttpResponseCode.BAD_REQUEST;
+
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            int responseCode = connection.getResponseCode();
+
+            // Then
+            assertThat(responseCode, is(expectedHttpResponseCode));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        
+    }
+
+    @Test
+    @DisplayName("Should return response message indicating ID is too short")
+    void shouldReturnResponseMessageForShortId() throws Exception {
+
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "1342";
+        var expectedResponseBody = "too short";
+
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            connection.getResponseCode();
+            var responseBody = httpResponseReader.readResponse(connection);
+
+            // Then
+            assertThat(responseBody, containsString(expectedResponseBody));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        
+    }
+
+    @Test
+    @DisplayName("Should return Content-Type as application/json for short ID")
+    void shouldReturnContentTypeForShortId() throws Exception {
+
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "1342";
+        var expectedContentType = "application/json";
+
+        // When
+        HttpURLConnection connection = null;
+        
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            connection.getResponseCode();
+            String contentType = connection.getHeaderField("Content-Type");
+
+            // Then
+            assertThat(contentType, is(expectedContentType));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     @Test
     @DisplayName("Should return 400 Bad Request for long ID")
-    void shouldReturn400ForLongId() throws Exception {
-        // When
-        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl/longidsended", "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
-        int responseCode = connection.getResponseCode();
-        String responseBody = httpResponseReader.readResponse(connection);
-        String contentType = connection.getHeaderField("Content-Type");
+    void shouldReturn400ForLongIdResponseCode() throws Exception {
 
-        // Then
-        assertThat("Response code should indicate BAD_REQUEST code", responseCode, is(HttpResponseCode.BAD_REQUEST));
-        assertThat("Response message should indicate that id is too long", responseBody, containsString("too long"));
-        assertThat("Content-type shoud be application/json", contentType, is("application/json"));
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "longidsended";
+        var expectedHttpResponseCode = HttpResponseCode.NOT_FOUND;
+
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            int responseCode = connection.getResponseCode();
+
+            // Then
+            assertThat(responseCode, is(expectedHttpResponseCode));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return response message indicating ID is too long")
+    void shouldReturnResponseMessageForLongId() throws Exception {
+                
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "longidsended";
+        var expectedResponseBody = "too long";
+
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            connection.getResponseCode();
+            String responseBody = httpResponseReader.readResponse(connection);
+
+            // Then
+            assertThat(responseBody, containsString(expectedResponseBody));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return Content-Type as application/json for long ID")
+    void shouldReturnContentTypeForLongId() throws Exception {
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "longidsended";
+        var expectedContentType = "application/json";
+
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            connection.getResponseCode();
+            String contentType = connection.getHeaderField("Content-Type");
+
+            // Then
+            assertThat(contentType, is(expectedContentType));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     @Test
     @DisplayName("Should return 404 Not Found for non-existent ID")
-    void shouldReturn404ForNonExistentId() throws Exception {
-        
-        // When
-        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl/1234abcd", "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
-        int responseCode = connection.getResponseCode();
-        String responseBody = httpResponseReader.readResponse(connection);
-        String contentType = connection.getHeaderField("Content-Type");
+    void shouldReturn404ForNonExistentIdResponseCode() throws Exception {
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "1234abcd";
+        var expectedHttpResponseCode = HttpResponseCode.NOT_FOUND;
 
-        // Then
-        assertThat("Response code should indicate NOT_FOUND code", responseCode, is(HttpResponseCode.NOT_FOUND));
-        assertThat("Response message should indicate that id is not found", responseBody, containsString("not found"));
-        assertThat("Content-type shoud be application/json", contentType, is("application/json"));
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            int responseCode = connection.getResponseCode();
+
+            // Then
+            assertThat(responseCode, is(expectedHttpResponseCode));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return response message indicating ID is not found")
+    void shouldReturnResponseMessageForNonExistentId() throws Exception {
+
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "1234abcd";
+        var expectedResponseBody = "not found";
+
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            connection.getResponseCode();
+            String responseBody = httpResponseReader.readResponse(connection);
+
+            // Then
+            assertThat(responseBody, containsString(expectedResponseBody));
+    
+        } 
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }   
+    }
+
+    @Test
+    @DisplayName("Should return Content-Type as application/json for non-existent ID")
+    void shouldReturnContentTypeForNonExistentId() throws Exception {
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "1234abcd";
+        var expectedContentType = "application/json";
+
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            connection.getResponseCode();
+            String contentType = connection.getHeaderField("Content-Type");
+
+            // Then
+            assertThat( contentType, is(expectedContentType));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     @Test
     @DisplayName("Should return 400 Bad Request for ID with non-alphanumeric characters")
-    void shouldReturn400ForNonAlphanumericId() throws Exception {
-        // When
-        HttpURLConnection connection = httpClientHelper.createConnection("http://localhost:4567/crawl/123$abcd", "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
-        int responseCode = connection.getResponseCode();
-        String responseBody = httpResponseReader.readResponse(connection);
-        String contentType = connection.getHeaderField("Content-Type");
+    void shouldReturn400ForNonAlphanumericIdResponseCode() throws Exception {
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "123$abcd";
+        var expectedHttpResponseCode = HttpResponseCode.BAD_REQUEST;
 
-        // Then
-        assertThat("Response code should indicate BAD_REQUEST", responseCode, is(400));
-        assertThat("Response message should indicate that id must be alphanumeric",responseBody, containsString("must be alphanumeric"));
-        assertThat("Content-type shoud be application/json", contentType, is("application/json"));
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            int responseCode = connection.getResponseCode();
+
+            // Then
+            assertThat(responseCode, is(expectedHttpResponseCode));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return response message indicating ID must be alphanumeric")
+    void shouldReturnResponseMessageForNonAlphanumericId() throws Exception {
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "123$abcd";
+        var expectedResponseBody = "must be alphanumeric";
+
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+                connection.getResponseCode();
+            String responseBody = httpResponseReader.readResponse(connection);
+
+            // Then
+            assertThat(responseBody, containsString(expectedResponseBody)); 
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should return Content-Type as application/json for ID with non-alphanumeric characters")
+    void shouldReturnContentTypeForNonAlphanumericId() throws Exception {
+        var BASE_PATH = "/crawl/";
+        var url = BASE_URL + BASE_PATH + "123$abcd";
+        var expectedContentType = "application/json";
+
+        // When
+        HttpURLConnection connection = null;
+        try{
+            connection = httpClientHelper.createConnection(url, "GET", null, HTTP_CONNECTION_TIMEOUT, HTTP_READ_TIMEOUT);
+            connection.getResponseCode();
+            String contentType = connection.getHeaderField("Content-Type");
+
+            // Then
+            assertThat(contentType, is(expectedContentType));
+        }
+        finally{
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 }
