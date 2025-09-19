@@ -15,7 +15,7 @@ public class CrawlerStatusResponse {
     public CrawlerStatusResponse(String id, String status, List<String> urls) {
         this.id = id;
         this.status = status;
-        this.urls = urls;
+        this.urls = List.copyOf(urls);
     }
 
     public void setId(String id) {
@@ -28,7 +28,7 @@ public class CrawlerStatusResponse {
 
 
     public void setUrls(List<String> urls) {
-        this.urls = urls;
+        this.urls = List.copyOf(urls);
     }
 
     public String toJson() {

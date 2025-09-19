@@ -30,7 +30,7 @@ public class Search {
     }
 
     public void setUrls(Set<String> urls) {
-        this.urls = urls;
+        this.urls = Set.copyOf(urls);
     }
 
     public String getId() {
